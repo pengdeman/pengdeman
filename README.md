@@ -74,11 +74,23 @@ src/main/java/com/pengdeman/
 
 ### 环境要求
 - Java 8 或更高版本
-- Maven 3.6 或更高版本（可选，可以使用IDE内置Maven）
+- **无需安装Maven** - 项目已包含Maven Wrapper
 
 ### 构建和运行
 
-#### 方法1：使用构建脚本
+#### 方法1：使用Maven Wrapper（推荐）
+```bash
+# 清理并编译
+./mvnw clean compile
+
+# 运行应用
+./mvnw spring-boot:run
+
+# 打包应用（跳过测试）
+./mvnw clean package -DskipTests
+```
+
+#### 方法2：使用构建脚本
 ```bash
 # 构建项目
 ./build.sh
@@ -87,26 +99,16 @@ src/main/java/com/pengdeman/
 ./run.sh
 ```
 
-#### 方法2：使用Maven命令
-```bash
-# 清理并编译
-mvn clean compile
-
-# 运行应用
-mvn spring-boot:run
-
-# 打包应用
-mvn package
-```
-
 #### 方法3：运行打包后的JAR
 ```bash
 # 构建JAR包
-mvn package
+./mvnw clean package -DskipTests
 
 # 运行JAR包
 java -jar target/pengdeman-1.0.0.jar
 ```
+
+> **Windows用户**：使用 `mvnw.cmd` 代替 `./mvnw`
 
 ## 测试API
 
@@ -179,6 +181,164 @@ curl http://localhost:8080/api/demo/1
 | 监控 | 无 | Actuator监控 |
 | 异常处理 | 无 | 全局异常处理 |
 
+## 部署到阿里云服务器
+
+### 前置要求
+- 阿里云ECS服务器（已安装Java 8或更高版本）
+- 服务器已开放8080端口（或其他指定端口）
+
+### 部署步骤
+
+#### 1. 本地构建JAR包
+```bash
+# 清理并打包（使用Maven Wrapper，无需安装Maven）
+./mvnw clean package -DskipTests
+
+# 生成的JAR包位于: target/pengdeman-1.0.0.jar
+```
+
+#### 2. 上传JAR包到服务器
+```bash
+# 使用scp上传
+scp target/pengdeman-1.0.0.jar root@your-server-ip:/opt/pengdeman/
+
+# 或使用sftp工具上传
+```
+
+#### 3. 服务器上运行
+
+**方式一：直接运行（前台）**
+```bash
+cd /opt/pengdeman
+java -jar pengdeman-1.0.0.jar
+```
+
+**方式二：后台运行（推荐）**
+```bash
+cd /opt/pengdeman
+nohup java -jar pengdeman-1.0.0.jar > app.log 2>&1 &
+```
+
+**方式三：使用启动脚本**
+```bash
+# 创建启动脚本
+cat > /opt/pengdeman/start.sh << 'EOF'
+#!/bin/bash
+APP_NAME=pengdeman-1.0.0.jar
+LOG_FILE=/opt/pengdeman/app.log
+
+# 检查是否已运行
+PID=$(ps -ef | grep $APP_NAME | grep -v grep | awk '{print $2}')
+if [ -n "$PID" ]; then
+    echo "应用已在运行，PID: $PID"
+    exit 1
+fi
+
+# 启动应用
+nohup java -jar /opt/pengdeman/$APP_NAME > $LOG_FILE 2>&1 &
+echo "应用启动成功"
+EOF
+
+chmod +x /opt/pengdeman/start.sh
+
+# 创建停止脚本
+cat > /opt/pengdeman/stop.sh << 'EOF'
+#!/bin/bash
+APP_NAME=pengdeman-1.0.0.jar
+
+PID=$(ps -ef | grep $APP_NAME | grep -v grep | awk '{print $2}')
+if [ -z "$PID" ]; then
+    echo "应用未运行"
+    exit 1
+fi
+
+kill -15 $PID
+echo "正在停止应用..."
+sleep 5
+
+# 检查是否停止成功
+PID=$(ps -ef | grep $APP_NAME | grep -v grep | awk '{print $2}')
+if [ -n "$PID" ]; then
+    echo "强制停止应用"
+    kill -9 $PID
+fi
+echo "应用已停止"
+EOF
+
+chmod +x /opt/pengdeman/stop.sh
+
+# 使用脚本
+./start.sh   # 启动
+./stop.sh    # 停止
+```
+
+#### 4. 配置systemd服务（生产环境推荐）
+```bash
+# 创建服务文件
+cat > /etc/systemd/system/pengdeman.service << 'EOF'
+[Unit]
+Description=Pengdeman Spring Boot Application
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/pengdeman
+ExecStart=/usr/bin/java -jar /opt/pengdeman/pengdeman-1.0.0.jar
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 启用并启动服务
+systemctl daemon-reload
+systemctl enable pengdeman
+systemctl start pengdeman
+
+# 查看状态
+systemctl status pengdeman
+
+# 查看日志
+journalctl -u pengdeman -f
+```
+
+#### 5. 验证部署
+```bash
+# 检查端口是否监听
+netstat -tlnp | grep 8080
+
+# 本地测试
+curl http://localhost:8080/actuator/health
+
+# 外部访问（替换为你的服务器IP）
+curl http://your-server-ip:8080/api/demo/welcome
+```
+
+### JVM参数优化
+```bash
+# 生产环境建议添加JVM参数
+java -Xms512m -Xmx1024m -jar pengdeman-1.0.0.jar
+
+# 或在启动脚本中配置
+nohup java -Xms512m -Xmx1024m -XX:+UseG1GC -jar pengdeman-1.0.0.jar > app.log 2>&1 &
+```
+
+### 常用操作
+```bash
+# 查看应用日志
+tail -f /opt/pengdeman/app.log
+
+# 查看应用进程
+ps -ef | grep pengdeman
+
+# 实时监控资源使用
+top -p $(pgrep -f pengdeman-1.0.0.jar)
+```
+
 ## 后续优化建议
 
 1. **安全性**：添加Spring Security认证授权
@@ -186,5 +346,4 @@ curl http://localhost:8080/api/demo/1
 3. **日志**：配置更完善的日志系统
 4. **测试**：添加单元测试和集成测试
 5. **文档**：集成Swagger API文档
-6. **容器化**：添加Docker支持
-7. **CI/CD**：配置自动化构建部署流程
+6. **CI/CD**：配置自动化构建部署流程

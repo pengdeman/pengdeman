@@ -28,6 +28,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 // 允许所有请求（临时配置，生产环境需配置具体权限）
                 .authorizeRequests()
+                .antMatchers("/").permitAll()
+                .antMatchers("/index.html").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/api/demo/**").permitAll()
                 .antMatchers("/actuator/**").permitAll()
