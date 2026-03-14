@@ -7,7 +7,9 @@ import com.pengdeman.dto.WxLoginRequest;
 import com.pengdeman.dto.WxLoginResponse;
 import com.pengdeman.exception.WxLoginException;
 import com.pengdeman.model.UserEntity;
+import com.pengdeman.model.UserFinanceEntity;
 import com.pengdeman.repository.UserRepository;
+import com.pengdeman.repository.UserFinanceRepository;
 import com.pengdeman.util.JwtUtil;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
@@ -31,13 +34,16 @@ public class WeChatService {
 
     private final WeChatConfig weChatConfig;
     private final UserRepository userRepository;
+    private final UserFinanceRepository userFinanceRepository;
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
 
     public WeChatService(WeChatConfig weChatConfig, UserRepository userRepository,
+                         UserFinanceRepository userFinanceRepository,
                          JwtUtil jwtUtil, ObjectMapper objectMapper) {
         this.weChatConfig = weChatConfig;
         this.userRepository = userRepository;
+        this.userFinanceRepository = userFinanceRepository;
         this.jwtUtil = jwtUtil;
         this.objectMapper = objectMapper;
     }
@@ -60,31 +66,52 @@ public class WeChatService {
         WxCode2SessionResponse wxResponse = code2Session(request.getCode());
 
         // 2. 根据openid查找或创建用户
+        boolean isNewUser = false;
         UserEntity user = userRepository.findByOpenid(wxResponse.getOpenid())
                 .map(existingUser -> updateExistingUser(existingUser, request))
-                .orElseGet(() -> createNewUser(wxResponse, request));
+                .orElseGet(() -> {
+                    UserEntity newUser = createNewUser(wxResponse, request);
+                    createUserFinance(newUser.getId());
+                    return newUser;
+                });
 
-        // 3. 更新最后登录时间
+        // 3. 判断是否为新用户 - 通过检查createdAt和lastLoginAt的时间差
+        if (user.getCreatedAt() != null && user.getLastLoginAt() == null) {
+            isNewUser = true;
+        } else if (user.getCreatedAt() != null && user.getLastLoginAt() != null) {
+            // 如果创建时间和最后登录时间相差不超过5秒，认为是新用户
+            isNewUser = user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5));
+        }
+
+        // 4. 更新最后登录时间
         user.setLastLoginAt(LocalDateTime.now());
         user = userRepository.save(user);
 
-        // 4. 生成JWT token
+        // 5. 生成JWT token
         String token = jwtUtil.generateToken(user.getId(), user.getOpenid());
 
-        // 5. 判断是否为新用户
-        boolean isNewUser = user.getCreatedAt() != null
-                && user.getLastLoginAt() != null
-                && user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5));
+        // 6. 获取用户资金信息
+        UserFinanceEntity finance = userFinanceRepository.findByUserId(user.getId())
+                .orElse(null);
 
-        // 6. 构建响应
-        return WxLoginResponse.builder()
+        // 7. 构建响应
+        WxLoginResponse.Builder builder = WxLoginResponse.builder()
                 .token(token)
                 .userId(user.getId())
                 .openid(user.getOpenid())
                 .nickname(user.getNickname())
                 .avatar(user.getAvatar())
-                .isNewUser(isNewUser)
-                .build();
+                .isNewUser(isNewUser);
+
+        // 添加资金信息
+        if (finance != null) {
+            builder.balance(finance.getBalance())
+                    .totalIncome(finance.getTotalIncome())
+                    .withdrawableAmount(finance.getWithdrawableAmount())
+                    .orderCount(finance.getOrderCount());
+        }
+
+        return builder.build();
     }
 
     /**
@@ -140,6 +167,21 @@ public class WeChatService {
         user.setGender(request.getGender());
         user.setStatus(1);
         return user;
+    }
+
+    /**
+     * 创建用户资金账户
+     */
+    private void createUserFinance(Long userId) {
+        UserFinanceEntity finance = new UserFinanceEntity();
+        finance.setUserId(userId);
+        finance.setBalance(BigDecimal.ZERO);
+        finance.setTotalIncome(BigDecimal.ZERO);
+        finance.setWithdrawableAmount(BigDecimal.ZERO);
+        finance.setOrderCount(0);
+        finance.setPendingWithdrawal(BigDecimal.ZERO);
+        finance.setTotalWithdrawn(BigDecimal.ZERO);
+        userFinanceRepository.save(finance);
     }
 
     /**

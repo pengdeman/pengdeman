@@ -1,5 +1,7 @@
 package com.pengdeman.dto;
 
+import java.math.BigDecimal;
+
 /**
  * 微信登录响应DTO
  */
@@ -35,6 +37,26 @@ public class WxLoginResponse {
      */
     private Boolean isNewUser;
 
+    /**
+     * 账户余额
+     */
+    private BigDecimal balance;
+
+    /**
+     * 总收入
+     */
+    private BigDecimal totalIncome;
+
+    /**
+     * 可提现金额
+     */
+    private BigDecimal withdrawableAmount;
+
+    /**
+     * 订单总数
+     */
+    private Integer orderCount;
+
     public WxLoginResponse() {
     }
 
@@ -45,6 +67,10 @@ public class WxLoginResponse {
         this.nickname = builder.nickname;
         this.avatar = builder.avatar;
         this.isNewUser = builder.isNewUser;
+        this.balance = builder.balance;
+        this.totalIncome = builder.totalIncome;
+        this.withdrawableAmount = builder.withdrawableAmount;
+        this.orderCount = builder.orderCount;
     }
 
     public String getToken() {
@@ -95,6 +121,38 @@ public class WxLoginResponse {
         this.isNewUser = isNewUser;
     }
 
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
+    public BigDecimal getTotalIncome() {
+        return totalIncome;
+    }
+
+    public void setTotalIncome(BigDecimal totalIncome) {
+        this.totalIncome = totalIncome;
+    }
+
+    public BigDecimal getWithdrawableAmount() {
+        return withdrawableAmount;
+    }
+
+    public void setWithdrawableAmount(BigDecimal withdrawableAmount) {
+        this.withdrawableAmount = withdrawableAmount;
+    }
+
+    public Integer getOrderCount() {
+        return orderCount;
+    }
+
+    public void setOrderCount(Integer orderCount) {
+        this.orderCount = orderCount;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -106,6 +164,10 @@ public class WxLoginResponse {
         private String nickname;
         private String avatar;
         private Boolean isNewUser;
+        private BigDecimal balance;
+        private BigDecimal totalIncome;
+        private BigDecimal withdrawableAmount;
+        private Integer orderCount;
 
         public Builder token(String token) {
             this.token = token;
@@ -134,6 +196,26 @@ public class WxLoginResponse {
 
         public Builder isNewUser(Boolean isNewUser) {
             this.isNewUser = isNewUser;
+            return this;
+        }
+
+        public Builder balance(BigDecimal balance) {
+            this.balance = balance;
+            return this;
+        }
+
+        public Builder totalIncome(BigDecimal totalIncome) {
+            this.totalIncome = totalIncome;
+            return this;
+        }
+
+        public Builder withdrawableAmount(BigDecimal withdrawableAmount) {
+            this.withdrawableAmount = withdrawableAmount;
+            return this;
+        }
+
+        public Builder orderCount(Integer orderCount) {
+            this.orderCount = orderCount;
             return this;
         }
 
