@@ -59,9 +59,8 @@ public class UserFinanceController {
         // TODO: 从token中获取userId
         Long userId = 1L;
         BigDecimal amount = userFinanceService.getWithdrawableAmount(userId);
-        WithdrawableAmountResponse response = WithdrawableAmountResponse.builder()
-                .withdrawableAmount(amount)
-                .build();
+        WithdrawableAmountResponse response = new WithdrawableAmountResponse();
+        response.setWithdrawableAmount(amount);
         return ResponseEntity.ok(response);
     }
 
@@ -73,12 +72,7 @@ public class UserFinanceController {
         // TODO: 从token中获取userId
         Long userId = 1L;
         // TODO: 实现订单统计逻辑
-        OrderStatsResponse response = OrderStatsResponse.builder()
-                .totalOrders(0)
-                .pendingOrders(0)
-                .confirmedOrders(0)
-                .completedOrders(0)
-                .build();
+        OrderStatsResponse response = new OrderStatsResponse(0, 0, 0, 0);
         return ResponseEntity.ok(response);
     }
 
