@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -66,21 +67,32 @@ public class WeChatService {
         WxCode2SessionResponse wxResponse = code2Session(request.getCode());
 
         // 2. 根据openid查找或创建用户
+        UserEntity user = null;
         boolean isNewUser = false;
-        UserEntity user = userRepository.findByOpenid(wxResponse.getOpenid())
-                .map(existingUser -> updateExistingUser(existingUser, request))
-                .orElseGet(() -> {
-                    UserEntity newUser = createNewUser(wxResponse, request);
-                    createUserFinance(newUser.getId());
-                    return newUser;
-                });
+
+        // 先查找用户
+        Optional<UserEntity> existingUserOpt = userRepository.findByOpenid(wxResponse.getOpenid());
+        if (existingUserOpt.isPresent()) {
+            // 用户已存在，更新信息
+            user = updateExistingUser(existingUserOpt.get(), request);
+        } else {
+            // 用户不存在，创建新用户
+            UserEntity newUser = createNewUser(wxResponse, request);
+            user = userRepository.save(newUser);
+
+            // 创建用户资金记录
+            createUserFinance(user.getId());
+            isNewUser = true;
+        }
 
         // 3. 判断是否为新用户 - 通过检查createdAt和lastLoginAt的时间差
         if (user.getCreatedAt() != null && user.getLastLoginAt() == null) {
             isNewUser = true;
         } else if (user.getCreatedAt() != null && user.getLastLoginAt() != null) {
             // 如果创建时间和最后登录时间相差不超过5秒，认为是新用户
-            isNewUser = user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5));
+            if (user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5))) {
+                isNewUser = true;
+            }
         }
 
         // 4. 更新最后登录时间
