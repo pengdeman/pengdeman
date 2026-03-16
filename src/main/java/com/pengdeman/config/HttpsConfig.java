@@ -11,8 +11,9 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * HTTPS配置类，实现HTTP 80端口自动跳转到HTTPS 443端口
+ * 开发环境已禁用，生产环境启用
  */
-@Configuration
+// @Configuration
 public class HttpsConfig {
 
     /**
