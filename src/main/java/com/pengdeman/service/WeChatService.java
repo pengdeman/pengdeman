@@ -63,6 +63,9 @@ public class WeChatService {
      */
     @Transactional
     public WxLoginResponse wxLogin(WxLoginRequest request) {
+        log.info("=== 开始微信登录流程，code: {}, nickname: {}, gender: {}",
+                request.getCode(), request.getNickname(), request.getGender());
+
         // 1. 调用微信API获取openid和session_key
         WxCode2SessionResponse wxResponse = code2Session(request.getCode());
 
@@ -73,20 +76,26 @@ public class WeChatService {
         // 先查找用户
         String openid = wxResponse.getOpenid();
         if (openid == null || openid.isEmpty()) {
+            log.error("微信API返回openid为空，requestCode: {}", request.getCode());
             throw new WxLoginException("微信API返回openid为空，请检查appid和appsecret配置");
         }
+
+        log.info("微信code2session成功，openid: {}, unionid: {}", openid, wxResponse.getUnionid());
 
         Optional<UserEntity> existingUserOpt = userRepository.findByOpenid(openid);
         if (existingUserOpt.isPresent()) {
             // 用户已存在，更新信息
+            log.info("用户已存在，openid: {}, userId: {}, 更新用户信息", openid, existingUserOpt.get().getId());
             user = updateExistingUser(existingUserOpt.get(), request);
         } else {
             // 用户不存在，创建新用户
+            log.info("新用户，openid: {}，创建用户账户", openid);
             UserEntity newUser = createNewUser(wxResponse, request);
             user = userRepository.save(newUser);
 
             // 创建用户资金记录
             createUserFinance(user.getId());
+            log.info("新用户创建完成，userId: {}, 已初始化资金账户", user.getId());
             isNewUser = true;
         }
 
@@ -100,12 +109,15 @@ public class WeChatService {
             }
         }
 
+        log.info("用户登录判断，userId: {}, openid: {}, isNewUser: {}", user.getId(), openid, isNewUser);
+
         // 4. 更新最后登录时间
         user.setLastLoginAt(LocalDateTime.now());
         user = userRepository.save(user);
 
         // 5. 生成JWT token
         String token = jwtUtil.generateToken(user.getId(), user.getOpenid());
+        log.debug("JWT token生成成功，userId: {}", user.getId());
 
         // 6. 获取用户资金信息
         UserFinanceEntity finance = userFinanceRepository.findByUserId(user.getId())
@@ -138,7 +150,11 @@ public class WeChatService {
                     .orderCount(finance.getOrderCount());
         }
 
-        return builder.build();
+        WxLoginResponse response = builder.build();
+        log.info("=== 微信登录完成，userId: {}, openid: {}, isNewUser: {}",
+                user.getId(), openid, isNewUser);
+
+        return response;
     }
 
     /**
