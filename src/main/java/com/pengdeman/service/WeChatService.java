@@ -26,7 +26,9 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 微信登录服务
+ * 微信小程序登录服务
+ * 处理微信小程序code登录，调用微信code2session接口获取openid，
+ * 查找或创建用户，初始化资金账户，返回JWT token
  */
 @Service
 public class WeChatService {
@@ -39,6 +41,9 @@ public class WeChatService {
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
 
+    /**
+     * 构造函数注入依赖
+     */
     public WeChatService(WeChatConfig weChatConfig, UserRepository userRepository,
                          UserFinanceRepository userFinanceRepository,
                          JwtUtil jwtUtil, ObjectMapper objectMapper) {
@@ -49,6 +54,10 @@ public class WeChatService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * OkHttp客户端配置，设置超时时间
+     * 连接超时10秒，读取超时10秒，写入超时10秒
+     */
     private final OkHttpClient okHttpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
@@ -56,10 +65,18 @@ public class WeChatService {
             .build();
 
     /**
-     * 微信小程序登录
+     * 微信小程序登录主入口
+     * 流程：
+     * 1. 调用微信code2session接口，通过code获取openid和unionid
+     * 2. 根据openid查找用户，不存在则创建新用户
+     * 3. 为新用户创建资金账户
+     * 4. 更新用户最后登录时间
+     * 5. 生成JWT token
+     * 6. 返回登录响应（包含token和用户信息、资金信息）
      *
-     * @param request 登录请求
-     * @return 登录响应
+     * @param request 微信登录请求，包含code、昵称、头像、性别
+     * @return 登录响应，包含token、用户信息、资金信息
+     * @throws WxLoginException 微信登录失败时抛出异常
      */
     @Transactional
     public WxLoginResponse wxLogin(WxLoginRequest request) {
@@ -92,45 +109,63 @@ public class WeChatService {
             log.info("新用户，openid: {}，创建用户账户", openid);
             UserEntity newUser = createNewUser(wxResponse, request);
             user = userRepository.save(newUser);
+            log.info("用户创建成功，userId: {}", user.getId());
 
             // 创建用户资金记录
             createUserFinance(user.getId());
-            log.info("新用户创建完成，userId: {}, 已初始化资金账户", user.getId());
+            log.info("新用户初始化完成，userId: {}, 资金账户已准备完成", user.getId());
             isNewUser = true;
         }
 
         // 3. 判断是否为新用户 - 通过检查createdAt和lastLoginAt的时间差
+        // 如果用户从未登录过，或者创建后5秒内再次登录，认为是新用户
         if (user.getCreatedAt() != null && user.getLastLoginAt() == null) {
             isNewUser = true;
+            log.debug("用户从未登录过，标记为新用户，userId: {}", user.getId());
         } else if (user.getCreatedAt() != null && user.getLastLoginAt() != null) {
             // 如果创建时间和最后登录时间相差不超过5秒，认为是新用户
             if (user.getLastLoginAt() != null && user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5))) {
                 isNewUser = true;
+                log.debug("用户创建时间离上次登录不超过5秒，标记为新用户，userId: {}", user.getId());
             }
         }
 
-        log.info("用户登录判断，userId: {}, openid: {}, isNewUser: {}", user.getId(), openid, isNewUser);
+        log.info("用户登录判断完成，userId: {}, openid: {}, isNewUser: {}", user.getId(), openid, isNewUser);
 
         // 4. 更新最后登录时间
         user.setLastLoginAt(LocalDateTime.now());
         user = userRepository.save(user);
+        log.debug("更新用户最后登录时间完成，userId: {}", user.getId());
 
         // 5. 生成JWT token
         String token = jwtUtil.generateToken(user.getId(), user.getOpenid());
         log.debug("JWT token生成成功，userId: {}", user.getId());
 
-        // 6. 获取用户资金信息
-        UserFinanceEntity finance = userFinanceRepository.findByUserId(user.getId())
-                .orElse(null);
+        // 6. 获取用户资金信息，如果不存在则补建
+        // 处理异常情况：用户存在但资金记录丢失
+        UserFinanceEntity finance = userFinanceRepository.findByUserId(user.getId()).orElse(null);
+        if (finance == null) {
+            log.warn("用户资金记录不存在，补建资金账户，userId: {}", user.getId());
+            createUserFinance(user.getId());
+            finance = userFinanceRepository.findByUserId(user.getId()).orElse(null);
+        }
+        if (finance != null) {
+            log.debug("获取用户资金信息成功，userId: {}, balance: {}, withdrawable: {}",
+                    user.getId(), finance.getBalance(), finance.getWithdrawableAmount());
+        } else {
+            log.error("补建资金账户失败，userId: {}", user.getId());
+        }
 
         // 7. 处理null昵称和头像，使用默认值
         String nickname = user.getNickname();
         if (nickname == null || nickname.isEmpty()) {
             nickname = "微信用户";
+            log.debug("用户昵称为空，使用默认值，userId: {}", user.getId());
         }
         String avatar = user.getAvatar();
         if (avatar == null) {
             avatar = "";
+            log.debug("用户头像为空，使用空字符串，userId: {}", user.getId());
         }
 
         // 8. 构建响应
@@ -159,9 +194,12 @@ public class WeChatService {
 
     /**
      * 调用微信code2session接口
+     * 通过微信登录code换取openid和session_key
      *
-     * @param code 微信登录code
-     * @return 微信响应
+     * @param code 微信小程序前端返回的登录code
+     * @return 微信API返回的响应，包含openid、unionid
+     * @throws WxLoginException 调用失败或微信返回错误时抛出异常
+     * @see <a href="https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html">微信文档</a>
      */
     private WxCode2SessionResponse code2Session(String code) {
         String url = String.format("%s?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
@@ -169,6 +207,7 @@ public class WeChatService {
                 weChatConfig.getAppId(),
                 weChatConfig.getAppSecret(),
                 code);
+        log.debug("调用微信code2session接口，url: {}", url.replace(weChatConfig.getAppSecret(), "******"));
 
         Request request = new Request.Builder()
                 .url(url)
@@ -177,31 +216,44 @@ public class WeChatService {
 
         try (Response response = okHttpClient.newCall(request).execute()) {
             if (!response.isSuccessful() || response.body() == null) {
-                log.error("调用微信API失败: {}", response);
+                log.error("调用微信API失败，response: {}", response);
                 throw new WxLoginException("调用微信服务失败");
             }
 
             String body = response.body().string();
-            log.debug("微信API响应: {}", body);
+            log.debug("微信API响应，body: {}", body);
 
             WxCode2SessionResponse wxResponse = objectMapper.readValue(body, WxCode2SessionResponse.class);
 
             if (!wxResponse.isSuccess()) {
-                log.error("微信API返回错误: errcode={}, errmsg={}", wxResponse.getErrCode(), wxResponse.getErrMsg());
+                log.error("微信API返回错误，errcode={}, errmsg={}", wxResponse.getErrCode(), wxResponse.getErrMsg());
                 throw new WxLoginException(wxResponse.getErrCode(), wxResponse.getErrMsg());
             }
 
+            log.debug("微信code2session调用成功，openid: {}, session_key长度: {}",
+                    wxResponse.getOpenid(),
+                    wxResponse.getSessionKey() != null ? wxResponse.getSessionKey().length() : 0);
             return wxResponse;
         } catch (IOException e) {
-            log.error("调用微信API异常", e);
+            log.error("调用微信API网络异常", e);
             throw new WxLoginException("网络请求失败");
         }
     }
 
     /**
-     * 创建新用户
+     * 创建新用户实体
+     * 根据微信返回的信息和前端传来的用户信息设置用户属性
+     *
+     * @param wxResponse 微信code2session响应
+     * @param request   前端登录请求
+     * @return 新建的用户实体（尚未保存到数据库）
      */
     private UserEntity createNewUser(WxCode2SessionResponse wxResponse, WxLoginRequest request) {
+        log.debug("创建新用户实体，openid: {}, unionid: {}, requestNickname: {}, requestAvatar: {}",
+                wxResponse.getOpenid(), wxResponse.getUnionid(),
+                request.getNickname() != null ? request.getNickname() : "null",
+                request.getAvatar() != null ? "not null" : "null");
+
         UserEntity user = new UserEntity();
         user.setOpenid(wxResponse.getOpenid());
         user.setUnionid(wxResponse.getUnionid());
@@ -210,50 +262,97 @@ public class WeChatService {
             user.setNickname(request.getNickname());
         } else {
             user.setNickname("微信用户");
+            log.debug("新用户昵称空，使用默认值'微信用户'");
         }
         user.setAvatar(request.getAvatar()); // null 允许
         user.setGender(request.getGender()); // null 允许
-        user.setStatus(1);
+        user.setStatus(1); // 正常状态
+
+        log.debug("新用户实体创建完成，openid: {}", wxResponse.getOpenid());
         return user;
     }
 
     /**
      * 创建用户资金账户
+     * 为新用户初始化资金信息，所有金额初始化为0
+     * 如果资金账户已存在，则跳过创建（避免唯一键冲突）
+     *
+     * @param userId 用户ID
      */
     private void createUserFinance(Long userId) {
+        log.debug("尝试创建用户资金账户，userId: {}", userId);
+
+        // 先检查是否已经存在
+        if (userFinanceRepository.findByUserId(userId).isPresent()) {
+            log.warn("用户资金账户已存在，跳过创建，userId: {}", userId);
+            return;
+        }
+
         UserFinanceEntity finance = new UserFinanceEntity();
         finance.setUserId(userId);
-        finance.setBalance(BigDecimal.ZERO);
-        finance.setTotalIncome(BigDecimal.ZERO);
-        finance.setWithdrawableAmount(BigDecimal.ZERO);
-        finance.setOrderCount(0);
-        finance.setPendingWithdrawal(BigDecimal.ZERO);
-        finance.setTotalWithdrawn(BigDecimal.ZERO);
+        finance.setBalance(BigDecimal.ZERO);          // 账户总余额
+        finance.setTotalIncome(BigDecimal.ZERO);     // 累计总收入
+        finance.setWithdrawableAmount(BigDecimal.ZERO); // 可提现金额
+        finance.setOrderCount(0);                     // 订单数量
+        finance.setPendingWithdrawal(BigDecimal.ZERO); // 待审核提现金额
+        finance.setTotalWithdrawn(BigDecimal.ZERO);  // 累计已提现
+
         userFinanceRepository.save(finance);
+        log.info("用户资金账户创建完成，userId: {}", userId);
     }
 
     /**
      * 更新已有用户信息
+     * 如果前端传来了新的昵称、头像、性别，则更新
+     *
+     * @param user    已有用户实体
+     * @param request 登录请求
+     * @return 更新后的用户实体（尚未保存到数据库）
      */
     private UserEntity updateExistingUser(UserEntity user, WxLoginRequest request) {
+        log.debug("更新已有用户信息，userId: {}, 当前nickname: {}",
+                user.getId(), user.getNickname());
+
+        int updateCount = 0;
         // 如果有新的用户信息，则更新
-        if (request.getNickname() != null) {
+        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname())) {
             user.setNickname(request.getNickname());
+            updateCount++;
+            log.debug("更新用户昵称，userId: {}, newNickname: {}", user.getId(), request.getNickname());
         }
-        if (request.getAvatar() != null) {
+        if (request.getAvatar() != null && !request.getAvatar().equals(user.getAvatar())) {
             user.setAvatar(request.getAvatar());
+            updateCount++;
+            log.debug("更新用户头像，userId: {}", user.getId());
         }
-        if (request.getGender() != null) {
+        if (request.getGender() != null && !request.getGender().equals(user.getGender())) {
             user.setGender(request.getGender());
+            updateCount++;
+            log.debug("更新用户性别，userId: {}, newGender: {}", user.getId(), request.getGender());
         }
+
+        if (updateCount > 0) {
+            log.info("用户信息更新完成，userId: {}, 更新字段数: {}", user.getId(), updateCount);
+        } else {
+            log.debug("用户信息无变化，不需要更新，userId: {}", user.getId());
+        }
+
         return user;
     }
 
     /**
      * 根据用户ID获取用户信息
+     *
+     * @param userId 用户ID
+     * @return 用户实体
+     * @throws WxLoginException 用户不存在时抛出异常
      */
     public UserEntity getUserById(Long userId) {
+        log.debug("根据ID获取用户信息，userId: {}", userId);
         return userRepository.findById(userId)
-                .orElseThrow(() -> new WxLoginException("用户不存在"));
+                .orElseThrow(() -> {
+                    log.error("用户不存在，userId: {}", userId);
+                    return new WxLoginException("用户不存在");
+                });
     }
 }
