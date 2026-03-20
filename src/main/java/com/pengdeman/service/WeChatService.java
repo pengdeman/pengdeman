@@ -71,7 +71,12 @@ public class WeChatService {
         boolean isNewUser = false;
 
         // 先查找用户
-        Optional<UserEntity> existingUserOpt = userRepository.findByOpenid(wxResponse.getOpenid());
+        String openid = wxResponse.getOpenid();
+        if (openid == null || openid.isEmpty()) {
+            throw new WxLoginException("微信API返回openid为空，请检查appid和appsecret配置");
+        }
+
+        Optional<UserEntity> existingUserOpt = userRepository.findByOpenid(openid);
         if (existingUserOpt.isPresent()) {
             // 用户已存在，更新信息
             user = updateExistingUser(existingUserOpt.get(), request);
@@ -90,7 +95,7 @@ public class WeChatService {
             isNewUser = true;
         } else if (user.getCreatedAt() != null && user.getLastLoginAt() != null) {
             // 如果创建时间和最后登录时间相差不超过5秒，认为是新用户
-            if (user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5))) {
+            if (user.getLastLoginAt() != null && user.getCreatedAt().isAfter(user.getLastLoginAt().minusSeconds(5))) {
                 isNewUser = true;
             }
         }
@@ -106,13 +111,23 @@ public class WeChatService {
         UserFinanceEntity finance = userFinanceRepository.findByUserId(user.getId())
                 .orElse(null);
 
-        // 7. 构建响应
+        // 7. 处理null昵称和头像，使用默认值
+        String nickname = user.getNickname();
+        if (nickname == null || nickname.isEmpty()) {
+            nickname = "微信用户";
+        }
+        String avatar = user.getAvatar();
+        if (avatar == null) {
+            avatar = "";
+        }
+
+        // 8. 构建响应
         WxLoginResponse.Builder builder = WxLoginResponse.builder()
                 .token(token)
                 .userId(user.getId())
                 .openid(user.getOpenid())
-                .nickname(user.getNickname())
-                .avatar(user.getAvatar())
+                .nickname(nickname)
+                .avatar(avatar)
                 .isNewUser(isNewUser);
 
         // 添加资金信息
@@ -174,9 +189,14 @@ public class WeChatService {
         UserEntity user = new UserEntity();
         user.setOpenid(wxResponse.getOpenid());
         user.setUnionid(wxResponse.getUnionid());
-        user.setNickname(request.getNickname());
-        user.setAvatar(request.getAvatar());
-        user.setGender(request.getGender());
+        // 处理null，设置默认值
+        if (request.getNickname() != null && !request.getNickname().isEmpty()) {
+            user.setNickname(request.getNickname());
+        } else {
+            user.setNickname("微信用户");
+        }
+        user.setAvatar(request.getAvatar()); // null 允许
+        user.setGender(request.getGender()); // null 允许
         user.setStatus(1);
         return user;
     }
