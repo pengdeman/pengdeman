@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -38,4 +39,19 @@ public interface WithdrawalRepository extends JpaRepository<WithdrawalEntity, Lo
      * 统计用户待审核提现数量
      */
     long countByUserIdAndStatus(Long userId, Integer status);
+
+    /**
+     * 检查用户本月是否已有非拒绝状态的提现申请
+     * 判断时间范围为本月第一天到最后一天
+     */
+    boolean existsByUserIdAndCreatedAtBetweenAndStatusNot(
+            Long userId,
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            Integer rejectedStatus);
+
+    /**
+     * 按状态分页查询所有提现申请（后台管理用）
+     */
+    Page<WithdrawalEntity> findByStatusOrderByCreatedAtDesc(Integer status, Pageable pageable);
 }

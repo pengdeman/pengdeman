@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,6 +19,11 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
      * 根据SKU查找商品
      */
     Optional<ProductEntity> findBySku(String sku);
+
+    /**
+     * 根据SKU ID查找商品
+     */
+    Optional<ProductEntity> findBySkuId(String skuId);
 
     /**
      * 根据标题模糊搜索商品（分页）
@@ -35,7 +41,17 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
     Page<ProductEntity> findByStatus(Integer status, Pageable pageable);
 
     /**
+     * 获取热门商品列表（已上架，热门）按排序
+     */
+    List<ProductEntity> findByIsHotTrueAndStatusOrderByHotSortOrderAsc(Integer status);
+
+    /**
      * 判断SKU是否存在
      */
     boolean existsBySku(String sku);
+
+    /**
+     * 判断SKU ID是否存在
+     */
+    boolean existsBySkuId(String skuId);
 }

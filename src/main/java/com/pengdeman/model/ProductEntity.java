@@ -1,14 +1,23 @@
 package com.pengdeman.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 产品实体类 - 存储商品信息
+ * 产品实体类 - 存储商品信息，支持京东返利商品
  */
 @Entity
 @Table(name = "products")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ProductEntity {
 
     @Id
@@ -16,7 +25,13 @@ public class ProductEntity {
     private Long id;
 
     /**
-     * 京东SKU
+     * 京东SKU ID
+     */
+    @Column(name = "sku_id", unique = true, length = 50)
+    private String skuId;
+
+    /**
+     * 京东SKU（兼容原有字段）
      */
     @Column(name = "sku", nullable = false, unique = true, length = 50)
     private String sku;
@@ -52,6 +67,12 @@ public class ProductEntity {
     private String imageUrl;
 
     /**
+     * 京东商品图片URL（独立字段）
+     */
+    @Column(name = "product_image", length = 500)
+    private String productImage;
+
+    /**
      * 商品分类ID
      */
     @Column(name = "category_id")
@@ -68,6 +89,42 @@ public class ProductEntity {
      */
     @Column(name = "original_price", precision = 10, scale = 2)
     private BigDecimal originalPrice;
+
+    /**
+     * 预估平台佣金
+     */
+    @Column(name = "estimated_commission", precision = 10, scale = 2)
+    private BigDecimal estimatedCommission;
+
+    /**
+     * 用户返利比例（百分比，默认20%）
+     */
+    @Column(name = "user_rebate_rate", precision = 5, scale = 2)
+    private BigDecimal userRebateRate;
+
+    /**
+     * 预估用户返利
+     */
+    @Column(name = "estimated_user_rebate", precision = 10, scale = 2)
+    private BigDecimal estimatedUserRebate;
+
+    /**
+     * CPS推广链接
+     */
+    @Column(name = "cps_url", length = 500)
+    private String cpsUrl;
+
+    /**
+     * 是否热门推荐
+     */
+    @Column(name = "is_hot")
+    private Boolean isHot;
+
+    /**
+     * 热门排序
+     */
+    @Column(name = "hot_sort_order")
+    private Integer hotSortOrder;
 
     /**
      * 销量
@@ -103,133 +160,28 @@ public class ProductEntity {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (userRebateRate == null) {
+            userRebateRate = new BigDecimal("20.00");
+        }
+        if (isHot == null) {
+            isHot = false;
+        }
+        if (hotSortOrder == null) {
+            hotSortOrder = 0;
+        }
+        if (salesCount == null) {
+            salesCount = 0;
+        }
+        if (stock == null) {
+            stock = 0;
+        }
+        if (status == null) {
+            status = 1;
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public ProductEntity() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getSku() {
-        return sku;
-    }
-
-    public void setSku(String sku) {
-        this.sku = sku;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public BigDecimal getCommissionRate() {
-        return commissionRate;
-    }
-
-    public void setCommissionRate(BigDecimal commissionRate) {
-        this.commissionRate = commissionRate;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public BigDecimal getJdPrice() {
-        return jdPrice;
-    }
-
-    public void setJdPrice(BigDecimal jdPrice) {
-        this.jdPrice = jdPrice;
-    }
-
-    public BigDecimal getOriginalPrice() {
-        return originalPrice;
-    }
-
-    public void setOriginalPrice(BigDecimal originalPrice) {
-        this.originalPrice = originalPrice;
-    }
-
-    public Integer getSalesCount() {
-        return salesCount;
-    }
-
-    public void setSalesCount(Integer salesCount) {
-        this.salesCount = salesCount;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

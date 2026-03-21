@@ -11,8 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Spring Security配置
- * 目前配置为允许所有请求通过，方便开发测试
- * 生产环境需要添加JWT token验证过滤器
+ * 配置接口权限：公开接口允许匿名访问，需要认证的接口要求token
  */
 @Configuration
 @EnableWebSecurity
@@ -26,17 +25,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 基于token，不需要session
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                // 允许所有请求（临时配置，生产环境需配置具体权限）
+                // 配置权限
                 .authorizeRequests()
                 .antMatchers("/").permitAll()
                 .antMatchers("/index.html").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/api/admin/auth/login").permitAll()
                 .antMatchers("/api/demo/**").permitAll()
+                .antMatchers("/api/ads/**").permitAll()
                 .antMatchers("/api/products/**").permitAll()
-                .antMatchers("/api/orders/**").permitAll()
-                .antMatchers("/api/users/**").permitAll()
-                .antMatchers("/api/withdrawals/**").permitAll()
-                .antMatchers("/api/bank-cards/**").permitAll()
+                .antMatchers("/api/rank/**").permitAll()
+                .antMatchers("/api/jd/**").permitAll()
+                .antMatchers("/api/orders/**").authenticated()
+                .antMatchers("/api/users/**").authenticated()
+                .antMatchers("/api/withdrawals/**").authenticated()
+                .antMatchers("/api/bank-cards/**").authenticated()
+                .antMatchers("/api/admin/**").authenticated()
                 .antMatchers("/actuator/**").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()

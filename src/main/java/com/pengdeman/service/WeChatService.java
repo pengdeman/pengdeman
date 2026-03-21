@@ -314,21 +314,29 @@ public class WeChatService {
                 user.getId(), user.getNickname());
 
         int updateCount = 0;
-        // 如果有新的用户信息，则更新
-        if (request.getNickname() != null && !request.getNickname().equals(user.getNickname())) {
-            user.setNickname(request.getNickname());
-            updateCount++;
-            log.info("更新用户昵称，userId: {}, newNickname: {}", user.getId(), request.getNickname());
+        // 如果前端传来了昵称，不管是否相同，都强制更新
+        // 覆盖数据库中可能的默认值 "微信用户"
+        if (request.getNickname() != null) {
+            if (!request.getNickname().equals(user.getNickname())) {
+                user.setNickname(request.getNickname());
+                updateCount++;
+                log.info("更新用户昵称，userId: {}, newNickname: {}", user.getId(), request.getNickname());
+            }
         }
-        if (request.getAvatar() != null && !request.getAvatar().equals(user.getAvatar())) {
-            user.setAvatar(request.getAvatar());
-            updateCount++;
-            log.info("更新用户头像，userId: {}", user.getId());
+        // 如果前端传来了头像，强制更新
+        if (request.getAvatar() != null) {
+            if (!request.getAvatar().equals(user.getAvatar())) {
+                user.setAvatar(request.getAvatar());
+                updateCount++;
+                log.info("更新用户头像，userId: {}", user.getId());
+            }
         }
-        if (request.getGender() != null && !request.getGender().equals(user.getGender())) {
-            user.setGender(request.getGender());
-            updateCount++;
-            log.info("更新用户性别，userId: {}, newGender: {}", user.getId(), request.getGender());
+        if (request.getGender() != null) {
+            if (!request.getGender().equals(user.getGender())) {
+                user.setGender(request.getGender());
+                updateCount++;
+                log.info("更新用户性别，userId: {}, newGender: {}", user.getId(), request.getGender());
+            }
         }
 
         if (updateCount > 0) {

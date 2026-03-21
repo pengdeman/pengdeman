@@ -23,7 +23,17 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByUnionid(String unionid);
 
     /**
+     * 根据用户名查找（管理员登录）
+     */
+    Optional<UserEntity> findByUsername(String username);
+
+    /**
      * 判断openid是否存在
      */
     boolean existsByOpenid(String openid);
+
+    /**
+     * 判断用户名是否存在
+     */
+    boolean existsByUsername(String username);
 }

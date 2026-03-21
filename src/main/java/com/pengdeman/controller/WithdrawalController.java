@@ -3,6 +3,7 @@ package com.pengdeman.controller;
 import com.pengdeman.dto.PageResponse;
 import com.pengdeman.dto.WithdrawalCreateRequest;
 import com.pengdeman.dto.WithdrawalDTO;
+import com.pengdeman.dto.WithdrawalEligibilityResponse;
 import com.pengdeman.service.WithdrawalService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,15 @@ public class WithdrawalController {
 
     public WithdrawalController(WithdrawalService withdrawalService) {
         this.withdrawalService = withdrawalService;
+    }
+
+    /**
+     * 检查是否可以申请提现
+     */
+    @GetMapping("/check-eligibility")
+    public ResponseEntity<WithdrawalEligibilityResponse> checkEligibility(@RequestParam Long userId) {
+        WithdrawalEligibilityResponse result = withdrawalService.checkEligibility(userId);
+        return ResponseEntity.ok(result);
     }
 
     /**

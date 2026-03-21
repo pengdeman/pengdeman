@@ -1,5 +1,9 @@
 package com.pengdeman.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -9,6 +13,9 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "withdrawals")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class WithdrawalEntity {
 
     @Id
@@ -52,10 +59,10 @@ public class WithdrawalEntity {
     private LocalDateTime payoutTime;
 
     /**
-     * 审核备注
+     * 审核备注/拒绝原因
      */
-    @Column(name = "audit_note", length = 200)
-    private String auditNote;
+    @Column(name = "remark", length = 500)
+    private String remark;
 
     /**
      * 创建时间
@@ -78,88 +85,5 @@ public class WithdrawalEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    public WithdrawalEntity() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public Long getBankCardId() {
-        return bankCardId;
-    }
-
-    public void setBankCardId(Long bankCardId) {
-        this.bankCardId = bankCardId;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getAuditTime() {
-        return auditTime;
-    }
-
-    public void setAuditTime(LocalDateTime auditTime) {
-        this.auditTime = auditTime;
-    }
-
-    public LocalDateTime getPayoutTime() {
-        return payoutTime;
-    }
-
-    public void setPayoutTime(LocalDateTime payoutTime) {
-        this.payoutTime = payoutTime;
-    }
-
-    public String getAuditNote() {
-        return auditNote;
-    }
-
-    public void setAuditNote(String auditNote) {
-        this.auditNote = auditNote;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

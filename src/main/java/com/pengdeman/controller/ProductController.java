@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 产品管理API控制器
@@ -137,6 +138,15 @@ public class ProductController {
                 .clickUrl(promotionLink)
                 .build();
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 获取热门商品列表（首页展示）
+     */
+    @GetMapping("/hot")
+    public ResponseEntity<List<ProductDTO>> getHotProducts() {
+        List<ProductDTO> products = productService.getHotProducts();
+        return ResponseEntity.ok(products);
     }
 
     /**

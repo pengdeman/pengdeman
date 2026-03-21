@@ -3,6 +3,7 @@ package com.pengdeman.service;
 import com.pengdeman.dto.PageResponse;
 import com.pengdeman.dto.WithdrawalDTO;
 import com.pengdeman.dto.WithdrawalCreateRequest;
+import com.pengdeman.dto.WithdrawalEligibilityResponse;
 import com.pengdeman.exception.BankCardException;
 import com.pengdeman.exception.UserFinanceException;
 import com.pengdeman.exception.WithdrawalException;
@@ -10,6 +11,7 @@ import com.pengdeman.model.BankCardEntity;
 import com.pengdeman.model.WithdrawalEntity;
 import com.pengdeman.repository.BankCardRepository;
 import com.pengdeman.repository.WithdrawalRepository;
+import com.pengdeman.service.SystemConfigService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +19,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,13 +35,60 @@ public class WithdrawalService {
     private final WithdrawalRepository withdrawalRepository;
     private final BankCardRepository bankCardRepository;
     private final UserFinanceService userFinanceService;
+    private final SystemConfigService systemConfigService;
 
     public WithdrawalService(WithdrawalRepository withdrawalRepository,
                              BankCardRepository bankCardRepository,
-                             UserFinanceService userFinanceService) {
+                             UserFinanceService userFinanceService,
+                             SystemConfigService systemConfigService) {
         this.withdrawalRepository = withdrawalRepository;
         this.bankCardRepository = bankCardRepository;
         this.userFinanceService = userFinanceService;
+        this.systemConfigService = systemConfigService;
+    }
+
+    /**
+     * 检查用户是否可以申请提现
+     */
+    public WithdrawalEligibilityResponse checkEligibility(Long userId) {
+        // 1. 检查本月是否已经申请过提现（除了已拒绝的）
+        LocalDate now = LocalDate.now();
+        LocalDate startOfMonth = now.withDayOfMonth(1);
+        LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+
+        LocalDateTime start = startOfMonth.atStartOfDay();
+        LocalDateTime end = endOfMonth.atTime(23, 59, 59);
+
+        // 状态 4=已拒绝，排除已拒绝的
+        boolean hasApplied = withdrawalRepository.existsByUserIdAndCreatedAtBetweenAndStatusNot(
+                userId, start, end, 4);
+
+        if (hasApplied) {
+            return WithdrawalEligibilityResponse.builder()
+                    .canApply(false)
+                    .reason("本月已申请过提现，每个自然月只能申请一次")
+                    .maxAmount(BigDecimal.ZERO)
+                    .build();
+        }
+
+        // 2. 获取可提现余额
+        BigDecimal available = userFinanceService.getWithdrawableAmount(userId);
+        BigDecimal minAmount = systemConfigService.getMinWithdrawalAmount();
+
+        if (available.compareTo(minAmount) < 0) {
+            return WithdrawalEligibilityResponse.builder()
+                    .canApply(false)
+                    .reason("可提现余额不足最低提现金额要求，最低提现金额为 " + minAmount + " 元")
+                    .maxAmount(available)
+                    .build();
+        }
+
+        return WithdrawalEligibilityResponse.builder()
+                .canApply(true)
+                .reason(null)
+                .maxAmount(available)
+                .minAmount(minAmount)
+                .build();
     }
 
     /**
@@ -142,7 +194,7 @@ public class WithdrawalService {
             userFinanceService.addBalance(entity.getUserId(), entity.getAmount());
         }
 
-        entity.setAuditNote(auditNote);
+        entity.setRemark(auditNote);
         WithdrawalEntity updatedEntity = withdrawalRepository.save(entity);
 
         BankCardEntity bankCard = bankCardRepository.findById(updatedEntity.getBankCardId())
@@ -182,24 +234,48 @@ public class WithdrawalService {
         dto.setUserId(entity.getUserId());
         dto.setAmount(entity.getAmount());
         dto.setBankCardId(entity.getBankCardId());
-        dto.setBankName(bankCard.getBankName());
-        dto.setCardNumber(bankCard.getCardNumber());
-        dto.setCardNumberMasked(maskCardNumber(bankCard.getCardNumber()));
-        dto.setCardholderName(bankCard.getCardholderName());
+        if (bankCard != null) {
+            dto.setBankName(bankCard.getBankName());
+            dto.setCardNumber(bankCard.getCardNumber());
+            dto.setCardNumberMasked(maskCardNumber(bankCard.getCardNumber()));
+            dto.setCardholderName(bankCard.getCardholderName());
+        }
         dto.setStatus(entity.getStatus());
         dto.setStatusText(getStatusText(entity.getStatus()));
         dto.setAuditTime(entity.getAuditTime());
         dto.setPayoutTime(entity.getPayoutTime());
-        dto.setAuditNote(entity.getAuditNote());
+        dto.setRemark(entity.getRemark());
         dto.setCreatedAt(entity.getCreatedAt());
 
         return dto;
     }
 
     /**
+     * 根据ID查找提现记录
+     */
+    public WithdrawalEntity findById(Long id) {
+        return withdrawalRepository.findById(id)
+                .orElseThrow(() -> new WithdrawalException("提现记录不存在: " + id));
+    }
+
+    /**
+     * 按状态分页查询（后台管理）
+     */
+    public Page<WithdrawalEntity> findByStatus(Integer status, Pageable pageable) {
+        return withdrawalRepository.findByUserIdAndStatus(null, status, pageable);
+    }
+
+    /**
+     * 查询所有（后台管理）
+     */
+    public Page<WithdrawalEntity> findAll(Pageable pageable) {
+        return withdrawalRepository.findAll(pageable);
+    }
+
+    /**
      * 获取状态文本
      */
-    private String getStatusText(Integer status) {
+    public String getStatusText(Integer status) {
         switch (status) {
             case 1:
                 return "待审核";

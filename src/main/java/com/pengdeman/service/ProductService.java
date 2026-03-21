@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 产品管理服务
@@ -152,6 +153,76 @@ public class ProductService {
     }
 
     /**
+     * 获取热门商品列表（首页展示）
+     */
+    public List<ProductDTO> getHotProducts() {
+        // 只获取热门且上架的商品，按排序返回
+        List<ProductEntity> entities = productRepository
+                .findByIsHotTrueAndStatusOrderByHotSortOrderAsc(1);
+
+        List<ProductDTO> dtoList = new ArrayList<>();
+        for (ProductEntity entity : entities) {
+            dtoList.add(convertToDTO(entity));
+        }
+        return dtoList;
+    }
+
+    /**
+     * 设置/取消商品热门推荐
+     */
+    @Transactional
+    public void setHot(Long productId, boolean isHot, Integer sortOrder) {
+        ProductEntity entity = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
+        entity.setIsHot(isHot);
+        if (sortOrder != null) {
+            entity.setHotSortOrder(sortOrder);
+        }
+        productRepository.save(entity);
+    }
+
+    /**
+     * 根据SKU ID查找商品
+     */
+    public Optional<ProductEntity> findBySkuId(String skuId) {
+        return productRepository.findBySkuId(skuId);
+    }
+
+    /**
+     * 创建商品从京东解析
+     */
+    @Transactional
+    public ProductEntity createFromJd(String skuId, String productName, String productImage,
+                                      BigDecimal originalPrice, BigDecimal estimatedCommission,
+                                      BigDecimal userRebateRate, String cpsUrl) {
+        ProductEntity entity = new ProductEntity();
+        entity.setSkuId(skuId);
+        entity.setSku(skuId); // sku字段兼容存储
+        entity.setTitle(productName);
+        entity.setProductImage(productImage);
+        entity.setOriginalPrice(originalPrice);
+        entity.setEstimatedCommission(estimatedCommission);
+        entity.setUserRebateRate(userRebateRate);
+        entity.setEstimatedUserRebate(
+                estimatedCommission.multiply(userRebateRate).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP)
+        );
+        entity.setCpsUrl(cpsUrl);
+        entity.setIsHot(false);
+        entity.setHotSortOrder(0);
+        entity.setPrice(originalPrice);
+        entity.setStatus(1);
+
+        // 计算佣金率
+        if (originalPrice != null && estimatedCommission != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal rate = estimatedCommission.divide(originalPrice, 4, BigDecimal.ROUND_HALF_UP)
+                    .multiply(new BigDecimal("100"));
+            entity.setCommissionRate(rate);
+        }
+
+        return productRepository.save(entity);
+    }
+
+    /**
      * 获取商品推广链接（模拟京东联盟API调用）
      */
     public String getPromotionLink(String sku) {
@@ -179,14 +250,29 @@ public class ProductService {
         dto.setStock(entity.getStock());
         dto.setStatus(entity.getStatus());
 
-        // 计算佣金相关信息
-        if (entity.getPrice() != null && entity.getCommissionRate() != null) {
-            BigDecimal commission = entity.getPrice().multiply(entity.getCommissionRate().divide(BigDecimal.valueOf(100)));
-            dto.setCommission(commission.setScale(2, BigDecimal.ROUND_HALF_UP));
-            // 用户返利比例：假设为佣金的20%
-            dto.setUserCommission(commission.multiply(BigDecimal.valueOf(0.2)).setScale(2, BigDecimal.ROUND_HALF_UP));
+        // 计算预估佣金和用户返利
+        BigDecimal estimatedCommission = entity.getEstimatedCommission();
+        if (estimatedCommission == null && entity.getPrice() != null && entity.getCommissionRate() != null) {
+            estimatedCommission = entity.getPrice().multiply(entity.getCommissionRate().divide(BigDecimal.valueOf(100)));
         }
 
+        if (estimatedCommission != null) {
+            dto.setCommission(estimatedCommission.setScale(2, BigDecimal.ROUND_HALF_UP));
+
+            BigDecimal userRebateRate = entity.getUserRebateRate();
+            if (userRebateRate == null) {
+                userRebateRate = new BigDecimal("20.00");
+            }
+            BigDecimal userRebate = estimatedCommission.multiply(userRebateRate).divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+            dto.setUserCommission(userRebate);
+            dto.setEstimatedUserRebate(userRebate);
+        }
+
+        dto.setEstimatedCommission(estimatedCommission);
+        dto.setEstimatedUserRebate(entity.getEstimatedUserRebate());
+        dto.setCpsUrl(entity.getCpsUrl());
+        dto.setIsHot(entity.getIsHot());
+        dto.setProductImage(entity.getProductImage());
         dto.setCreatedAt(entity.getCreatedAt());
 
         return dto;
