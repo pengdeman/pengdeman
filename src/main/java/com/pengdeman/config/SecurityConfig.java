@@ -8,6 +8,9 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import javax.annotation.Resource;
 
 /**
  * Spring Security配置
@@ -17,18 +20,23 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    @Resource
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                // 禁用CSRF
                 .csrf().disable()
-                // 基于token，不需要session
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                // 配置权限
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.addFilterBefore(jwtAuthenticationFilter, BasicAuthenticationFilter.class);
+        http
                 .authorizeRequests()
                 .antMatchers("/").permitAll()
+                .antMatchers("/*.html").permitAll()
+                .antMatchers("/**/*.js").permitAll()
+                .antMatchers("/**/*.css").permitAll()
                 .antMatchers("/index.html").permitAll()
+                .antMatchers("/admin.html").permitAll()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/api/admin/auth/login").permitAll()
                 .antMatchers("/api/demo/**").permitAll()

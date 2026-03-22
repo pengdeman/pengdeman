@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "monthly_rank", indexes = {
-    @Index(name = "idx_year_month_rebate", columnList = "yearMonth,totalRebate DESC")
+    @Index(name = "idx_year_month_rebate", columnList = "year_month,total_rebate DESC")
 })
 @Data
 @NoArgsConstructor

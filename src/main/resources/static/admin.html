@@ -1096,12 +1096,21 @@
                 }
             });
 
-            if (response.status === 401) {
+            if (response.status === 401 || response.status === 403) {
                 logout();
                 throw new Error('未授权，请重新登录');
             }
 
-            return response.json();
+            try {
+                const text = await response.text();
+                if (!text) {
+                    throw new Error('服务器返回空响应');
+                }
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('JSON解析失败', e);
+                throw new Error('响应格式错误');
+            }
         }
 
         // 登录

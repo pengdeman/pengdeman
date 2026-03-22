@@ -8,7 +8,7 @@ import com.pengdeman.repository.UserRepository;
 import com.pengdeman.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -26,12 +26,12 @@ public class AdminAuthService {
     private final UserRepository userRepository;
     private final AdminConfig adminConfig;
     private final JwtUtil jwtUtil;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminAuthService(UserRepository userRepository,
                             AdminConfig adminConfig,
                             JwtUtil jwtUtil,
-                            BCryptPasswordEncoder passwordEncoder) {
+                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.adminConfig = adminConfig;
         this.jwtUtil = jwtUtil;
@@ -45,7 +45,7 @@ public class AdminAuthService {
     public void initDefaultAdmin() {
         // 检查是否已有管理员
         boolean hasAdmin = userRepository.findAll().stream()
-                .anyMatch(UserEntity::getIsAdmin);
+                .anyMatch(user -> Boolean.TRUE.equals(user.getIsAdmin()));
 
         if (!hasAdmin) {
             String username = adminConfig.getUsername();
@@ -57,6 +57,9 @@ public class AdminAuthService {
             admin.setIsAdmin(true);
             admin.setStatus(1);
             admin.setNickname("系统管理员");
+            // 管理员不需要微信openid，设置为空字符串满足NOT NULL约束
+            admin.setOpenid("");
+            admin.setUnionid("");
 
             userRepository.save(admin);
 
