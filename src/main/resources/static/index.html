@@ -601,13 +601,13 @@ main[hidden] { display: none; }
       </div>
     </div>
     <nav class="nav-tabs" id="navTabs" aria-label="视图切换">
-      <button class="nav-tab on" id="tabManage" type="button">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-        维护台
-      </button>
-      <button class="nav-tab" id="tabExhibit" type="button">
+      <button class="nav-tab on" id="tabExhibit" type="button">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         展览馆
+      </button>
+      <button class="nav-tab" id="tabManage" type="button" title="需要密码进入">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        维护台
       </button>
     </nav>
     <div class="header-actions" id="manageActions">
@@ -639,8 +639,8 @@ main[hidden] { display: none; }
   </svg>
 </header>
 
-<!-- ================= 视图一：维护台（个人信息维护） ================= -->
-<main id="viewManage">
+<!-- ================= 视图一：维护台（个人信息维护，需密码） ================= -->
+<main id="viewManage" hidden>
   <!-- ================= 统计 ================= -->
   <section class="stats" aria-label="收藏统计">
     <div class="stat">
@@ -767,8 +767,8 @@ main[hidden] { display: none; }
   </div>
 </main>
 
-<!-- ================= 视图二：展览馆（对外展示） ================= -->
-<main id="viewExhibit" hidden>
+<!-- ================= 视图二：展览馆（对外展示，默认视图） ================= -->
+<main id="viewExhibit">
   <section class="exhibit-hero">
     <div class="hero-band"></div>
     <div class="hero-inner">
@@ -967,6 +967,26 @@ main[hidden] { display: none; }
   </div>
 </div>
 
+<!-- ================= 维护台密码弹层 ================= -->
+<div class="overlay" id="pwOverlay" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+  <div class="sheet sheet-sm">
+    <div class="confirm-icon">
+      <svg viewBox="0 0 24 24" width="27" height="27" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <h2 id="pwTitle">进入维护台</h2>
+    <p>维护台是静一的私人领地，输入密码才能进入哦。</p>
+    <form id="pwForm" novalidate>
+      <div class="field" style="margin:14px 0 4px">
+        <input id="pwInput" type="password" inputmode="numeric" maxlength="12" placeholder="请输入密码" autocomplete="off" style="width:100%;text-align:center;letter-spacing:6px;font-size:18px" aria-label="维护台密码">
+      </div>
+      <div class="btns-center" style="margin-top:16px">
+        <button type="button" class="btn" id="btnCancelPw">取消</button>
+        <button type="submit" class="btn btn-primary">解锁</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ================= 单品详情弹层 ================= -->
 <div class="overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
   <div class="sheet detail-sheet">
@@ -1063,7 +1083,9 @@ var sharedSnapshot = Array.isArray(window.__SHARED_DATA__); // 展馆快照模�
 var items = sharedSnapshot ? window.__SHARED_DATA__.filter(function (x) { return x && x.name; }).map(sanitizeItem) : load();
 var profile = loadProfile();
 var editingId = null;
-var currentView = 'manage'; // manage | exhibit | single
+var currentView = 'exhibit'; // exhibit | manage | single（默认展览馆）
+var manageUnlocked = false;  // 维护台解锁状态（本次会话有效）
+var MANAGE_PASS = '920521';  // 维护台密码
 var shareItem = null;       // 当前分享的单品
 var pendingImage = null;
 var filters = { q: '', series: '', condition: '', rarity: '', fav: false };
@@ -1420,9 +1442,9 @@ function setView(view, updateHash) {
     $('#exActions').style.display = 'none';
   }
   if (updateHash !== false) {
-    if (view === 'exhibit') {
-      try { history.replaceState(null, '', '#exhibit'); } catch (e) {}
-    } else if (view === 'manage') {
+    if (view === 'manage') {
+      try { history.replaceState(null, '', '#manage'); } catch (e) {}
+    } else if (view === 'exhibit') {
       try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
     }
   }
@@ -1439,11 +1461,19 @@ function applyRoute() {
     } catch (e) {}
     toast('分享链接好像出错了', 'err');
     try { history.replaceState(null, '', location.pathname); } catch (e2) {}
-    setView('manage', false);
+    setView('exhibit', false);
     return;
   }
-  if (h === '#exhibit' || sharedSnapshot) { setView('exhibit', false); return; }
-  setView('manage', false);
+  if (h === '#manage') { goManage(); return; }               // 直达维护台 → 需要密码
+  setView('exhibit', false);                                  // 默认进入展览馆
+}
+function goManage() {
+  if (sharedSnapshot) { setView('exhibit', false); return; } // 快照只读，永远展览馆
+  if (manageUnlocked) { setView('manage'); return; }
+  // 未解锁 → 弹出密码验证
+  $('#pwInput').value = '';
+  openOverlay($('#pwOverlay'));
+  setTimeout(function () { $('#pwInput').focus(); }, 120);
 }
 
 /* ================= 详情弹层 ================= */
@@ -1663,6 +1693,12 @@ function exportShareHTML() {
       var el = clone.querySelector(sel);
       if (el) el.innerHTML = '';
     });
+    // 快照是公开分享文件：剥掉维护台密码弹层，避免密码留在文件里
+    var pw = clone.querySelector('#pwOverlay');
+    if (pw) pw.remove();
+    clone.querySelectorAll('script').forEach(function (sc) {
+      if (sc.textContent) sc.textContent = sc.textContent.replace(/var MANAGE_PASS = '[^']*';/, "var MANAGE_PASS = '';");
+    });
     clone.querySelectorAll('img').forEach(function (im) { im.removeAttribute('src'); });
     clone.querySelectorAll('.overlay.open').forEach(function (o) { o.classList.remove('open'); });
     var bd = clone.querySelector('body');
@@ -1692,7 +1728,7 @@ function exportShareHTML() {
 function openOverlay(el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeOverlay(el) {
   el.classList.remove('open');
-  var ids = ['#formOverlay', '#confirmOverlay', '#detailOverlay', '#shareOverlay', '#profileOverlay'];
+  var ids = ['#formOverlay', '#confirmOverlay', '#detailOverlay', '#shareOverlay', '#profileOverlay', '#pwOverlay'];
   var anyOpen = ids.some(function (id) { return $(id).classList.contains('open'); });
   if (!anyOpen) document.body.style.overflow = '';
 }
@@ -2045,6 +2081,8 @@ function bindEvents() {
         closeOverlay($('#shareOverlay'));
       } else if ($('#detailOverlay').classList.contains('open')) {
         closeOverlay($('#detailOverlay'));
+      } else if ($('#pwOverlay') && $('#pwOverlay').classList.contains('open')) {
+        closeOverlay($('#pwOverlay'));
       } else if ($('#profileOverlay').classList.contains('open')) {
         closeOverlay($('#profileOverlay'));
       } else if ($('#formOverlay').classList.contains('open')) {
@@ -2054,7 +2092,7 @@ function bindEvents() {
   });
 
   // 视图切换 & 路由
-  $('#tabManage').addEventListener('click', function () { setView('manage'); });
+  $('#tabManage').addEventListener('click', goManage); // 维护台需要密码
   $('#tabExhibit').addEventListener('click', function () { setView('exhibit'); });
   window.addEventListener('hashchange', applyRoute);
   $('#singleHomeLink').addEventListener('click', function (e) {
@@ -2062,6 +2100,27 @@ function bindEvents() {
     try { history.replaceState(null, '', location.pathname); } catch (err) {}
     applyRoute();
   });
+
+  // 维护台密码验证（分享快照里没有这些节点，需判空）
+  if ($('#pwOverlay')) {
+    $('#pwOverlay').addEventListener('mousedown', function (e) { if (e.target === this) closeOverlay($('#pwOverlay')); });
+    $('#btnCancelPw').addEventListener('click', function () { closeOverlay($('#pwOverlay')); });
+    $('#pwForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = $('#pwInput').value;
+      if (v === MANAGE_PASS) {
+        manageUnlocked = true;
+        closeOverlay($('#pwOverlay'));
+        setView('manage');
+        toast('欢迎回来，静一');
+      } else {
+        toast('密码不对哦', 'err');
+        $('#pwInput').style.animation = 'shake .4s';
+        setTimeout(function () { $('#pwInput').style.animation = ''; }, 450);
+        $('#pwInput').select();
+      }
+    });
+  }
 
   // 展馆分享（导出快照 HTML）
   $('#btnShareExhibit').addEventListener('click', exportShareHTML);
