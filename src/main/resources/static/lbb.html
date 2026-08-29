@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="拉布布收藏录 — 本地数据存储的 Labubu 收藏管理小工具">
-<title>拉布布收藏录 · Labubu Keeper</title>
+<meta name="description" content="静一的泡泡玛特展 — 个人拉布布收藏维护与在线展览平台">
+<title>静一的泡泡玛特展 · Jingyi's Labubu Exhibition</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M28 46 L18 6 L54 30 Z' fill='%23B98A5C' stroke='%232E2016' stroke-width='6' stroke-linejoin='round'/%3E%3Cpath d='M72 46 L82 6 L46 30 Z' fill='%23B98A5C' stroke='%232E2016' stroke-width='6' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='58' r='40' fill='%23C99B6C' stroke='%232E2016' stroke-width='6'/%3E%3Ccircle cx='36' cy='52' r='6' fill='%232E2016'/%3E%3Ccircle cx='64' cy='52' r='6' fill='%232E2016'/%3E%3Cpath d='M35 68 Q50 84 65 68 Z' fill='%232E2016'/%3E%3Cpath d='M38 70 L41 75 L44 70.5 L47 75.5 L50 71 L53 76 L56 71.5 L59 76 L62 72 L65 76.5 L67 70' fill='none' stroke='%23F5E8D0' stroke-width='2.5'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -203,6 +203,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
   overflow: hidden; display: flex; flex-direction: column;
   animation: pop-in .4s backwards;
   transition: transform .16s ease, box-shadow .16s ease;
+  cursor: pointer;
 }
 .card:hover { transform: translate(-3px, -3px); box-shadow: 8px 8px 0 rgba(46,32,22,.92); }
 .card-img {
@@ -393,6 +394,155 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
   text-decoration: underline; text-underline-offset: 3px; padding: 4px 6px;
 }
 
+/* ============ 导航 tabs ============ */
+main[hidden] { display: none; }
+.nav-tabs {
+  display: flex; gap: 6px; padding: 5px;
+  background: #F4E9D8; border: 2.2px solid var(--ink); border-radius: 999px;
+}
+.nav-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 800; color: var(--ink-60);
+  background: none; border: none; border-radius: 999px;
+  padding: 7px 16px; cursor: pointer;
+  transition: background .15s, color .15s, transform .12s;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab:active { transform: scale(.95); }
+.nav-tab.on { background: var(--ink); color: var(--yellow); }
+.icon-btn.lg { width: 38px; height: 38px; border-radius: 12px; }
+
+/* ============ 展览馆视图 ============ */
+.exhibit-hero {
+  background: var(--card); border: var(--bw) solid var(--ink); border-radius: 26px;
+  box-shadow: var(--shadow); overflow: hidden;
+  margin-bottom: 34px; animation: pop-in .5s backwards;
+}
+.hero-band {
+  height: 16px;
+  background: repeating-linear-gradient(90deg, var(--primary) 0 46px, var(--yellow) 46px 92px, var(--pink) 92px 138px, var(--mint) 138px 184px);
+  border-bottom: var(--bw) solid var(--ink);
+}
+.hero-inner { display: flex; gap: 30px; padding: 34px 36px 30px; align-items: center; flex-wrap: wrap; }
+.hero-mascot { width: 150px; flex-shrink: 0; animation: float-y 3.6s ease-in-out infinite; }
+.hero-txt { flex: 1; min-width: 260px; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 800; letter-spacing: 2px;
+  background: var(--mint); border: 2px solid var(--ink); border-radius: 999px;
+  padding: 4px 13px; margin-bottom: 12px;
+}
+.hero-txt h2 {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: 38px; letter-spacing: 3px; line-height: 1.2; margin-bottom: 10px;
+}
+.hero-txt .bio { font-size: 14.5px; color: var(--ink-60); font-weight: 600; line-height: 1.75; max-width: 560px; margin-bottom: 18px; }
+.hero-facts { display: flex; gap: 10px; flex-wrap: wrap; }
+.fact {
+  display: flex; align-items: baseline; gap: 6px;
+  background: #F4E9D8; border: 2px solid var(--ink); border-radius: 14px;
+  padding: 8px 16px;
+}
+.fact .n { font-size: 22px; font-weight: 800; }
+.fact .t { font-size: 12px; font-weight: 700; color: var(--ink-60); }
+.hero-actions { display: flex; gap: 11px; flex-wrap: wrap; margin-top: 20px; }
+.exhibit-group { margin-bottom: 38px; animation: pop-in .5s backwards; }
+.group-head { display: flex; align-items: center; gap: 13px; margin-bottom: 17px; }
+.group-head h3 { font-family: var(--font-display); font-weight: 400; font-size: 22px; letter-spacing: 1.5px; }
+.group-head .cnt {
+  background: var(--ink); color: var(--yellow);
+  font-size: 11.5px; font-weight: 800; border-radius: 999px; padding: 2px 10px;
+}
+.group-head .line { flex: 1; height: 0; border-top: 2.5px dashed var(--ink-15); }
+.ex-card {
+  background: var(--card); border: var(--bw) solid var(--ink);
+  border-radius: var(--r-lg); box-shadow: var(--shadow);
+  overflow: hidden; cursor: pointer;
+  display: flex; flex-direction: column;
+  animation: pop-in .4s backwards;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.ex-card:hover { transform: translate(-3px, -3px); box-shadow: 8px 8px 0 rgba(46,32,22,.92); }
+.ex-card .ex-body { padding: 13px 15px 14px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+.ex-card .ex-note {
+  font-size: 12px; color: var(--ink-60); font-weight: 600; line-height: 1.6;
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.exhibit-empty { text-align: center; padding: 90px 20px; }
+.exhibit-empty h2 { font-family: var(--font-display); font-weight: 400; font-size: 26px; letter-spacing: 2px; margin: 14px 0 10px; }
+.exhibit-empty p { color: var(--ink-60); font-weight: 600; font-size: 14px; line-height: 1.8; }
+
+/* ============ 单品分享视图 ============ */
+#viewSingle { min-height: 70vh; }
+.single-wrap {
+  width: min(560px, 100%); margin: 30px auto 0;
+  background: var(--card); border: var(--bw) solid var(--ink); border-radius: 26px;
+  box-shadow: 8px 8px 0 rgba(46,32,22,.92); overflow: hidden;
+  animation: pop-in .5s backwards;
+}
+.single-img { position: relative; aspect-ratio: 1/1; background: #F4E9D8; border-bottom: var(--bw) solid var(--ink); }
+.single-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.single-body { padding: 24px 26px 22px; display: flex; flex-direction: column; gap: 13px; }
+.single-body h2 { font-family: var(--font-display); font-weight: 400; font-size: 26px; letter-spacing: 1.5px; line-height: 1.35; }
+.single-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.single-tags .tag { font-size: 12px; padding: 4px 12px; }
+.single-note { font-size: 14px; color: var(--ink-60); font-weight: 600; line-height: 1.8; }
+.single-foot {
+  border-top: 2px dashed var(--ink-15); padding-top: 15px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.single-foot .from { font-size: 12.5px; color: var(--ink-60); font-weight: 700; }
+.single-foot .btns { margin-left: auto; display: flex; gap: 9px; flex-wrap: wrap; }
+.single-nav { text-align: center; margin: 18px 0 40px; }
+.single-nav a { color: var(--primary-dark); font-weight: 800; font-size: 13.5px; text-decoration: underline; text-underline-offset: 4px; }
+
+/* ============ 详情弹层 ============ */
+.detail-sheet { width: min(860px, 96vw); }
+.detail-grid { display: grid; grid-template-columns: minmax(240px, 46%) 1fr; }
+.detail-media {
+  position: relative; background: #F4E9D8; border-right: var(--bw) solid var(--ink);
+  min-height: 320px; display: grid; place-items: center; overflow: hidden;
+}
+.detail-media img { width: 100%; height: 100%; max-height: 460px; object-fit: cover; display: block; }
+.detail-info { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 14px; }
+.detail-info h3 {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: 24px; letter-spacing: 1px; line-height: 1.35;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+}
+.detail-info .star-mark { color: #E8A200; font-size: 18px; }
+.dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 13.5px; margin: 0; }
+.dl dt { color: var(--ink-60); font-weight: 700; white-space: nowrap; }
+.dl dd { font-weight: 700; margin: 0; }
+.detail-note {
+  font-size: 13.5px; color: var(--ink-60); font-weight: 600; line-height: 1.8;
+  background: rgba(244,233,216,.55); border: 2px dashed var(--ink-15);
+  border-radius: 13px; padding: 11px 14px;
+}
+.detail-foot {
+  margin-top: auto; padding-top: 15px; border-top: 2px dashed var(--ink-15);
+  display: flex; gap: 9px; flex-wrap: wrap; align-items: center;
+}
+
+/* ============ 分享面板 ============ */
+.share-sheet { width: min(500px, 94vw); padding: 24px 24px 22px; }
+.share-sheet h2 { font-family: var(--font-display); font-weight: 400; font-size: 22px; letter-spacing: 1.5px; margin-bottom: 6px; }
+.share-sheet .desc { font-size: 13px; color: var(--ink-60); font-weight: 600; line-height: 1.7; margin-bottom: 16px; }
+.share-link-box { display: flex; gap: 9px; margin-bottom: 16px; }
+.share-link-box input {
+  flex: 1; min-width: 0; font-family: inherit; font-size: 12.5px; font-weight: 600;
+  padding: 10px 13px; border: 2.2px solid var(--ink); border-radius: 12px;
+  background: #fff; color: var(--ink-60);
+}
+.share-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.share-acts .btn { justify-content: center; }
+.share-tip {
+  margin-top: 14px; font-size: 12px; color: var(--ink-60); font-weight: 600; line-height: 1.7;
+  background: rgba(255,224,138,.4); border: 2px dashed var(--ink-15);
+  border-radius: 12px; padding: 10px 13px;
+}
+
 /* ============ 响应式 ============ */
 @media (max-width: 680px) {
   .brand-txt h1 { font-size: 22px; }
@@ -406,6 +556,15 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
   .nums { flex-direction: column; gap: 2px; }
   .date { display: none; }
   .stat .num { font-size: 20px; }
+  .nav-tab { padding: 7px 12px; font-size: 13px; }
+  .header-actions { width: 100%; justify-content: flex-end; }
+  .hero-inner { padding: 24px 20px; }
+  .hero-txt h2 { font-size: 28px; }
+  .hero-mascot { width: 110px; margin: 0 auto; }
+  .share-acts { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .detail-media { border-right: none; border-bottom: var(--bw) solid var(--ink); }
+  .detail-media img { max-height: 300px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -437,11 +596,24 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
         <path d="M49 80 L52.5 86 L56 80.5 L59.5 86.5 L63 81 L66.5 87 L70 81.5 L73.5 87 L77 82 L80.5 87.5 L84 82 L86 80" fill="none" stroke="#F5E8D0" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
       </svg>
       <div class="brand-txt">
-        <h1>拉布布收藏录 <span class="count-badge" id="countBadge">0 只</span></h1>
-        <div class="sub">LABUBU&nbsp;KEEPER · 我的收藏台账</div>
+        <h1>静一的泡泡玛特展 <span class="count-badge" id="countBadge">0 只</span></h1>
+        <div class="sub">JINGYI'S&nbsp;LABUBU&nbsp;EXHIBITION · 维护与展示</div>
       </div>
     </div>
-    <div class="header-actions">
+    <nav class="nav-tabs" id="navTabs" aria-label="视图切换">
+      <button class="nav-tab on" id="tabManage" type="button">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+        维护台
+      </button>
+      <button class="nav-tab" id="tabExhibit" type="button">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        展览馆
+      </button>
+    </nav>
+    <div class="header-actions" id="manageActions">
+      <button class="icon-btn lg" id="btnProfile" type="button" aria-label="展主资料" title="展主资料设置">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </button>
       <button class="btn" id="btnImport" type="button" aria-label="导入备份数据">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
         导入
@@ -452,7 +624,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
       </button>
       <button class="btn btn-primary" id="btnAdd" type="button">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-        添加拉布布
+        添加藏品
       </button>
     </div>
   </div>
@@ -467,7 +639,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
   </svg>
 </header>
 
-<main>
+<!-- ================= 视图一：维护台（个人信息维护） ================= -->
+<main id="viewManage">
   <!-- ================= 统计 ================= -->
   <section class="stats" aria-label="收藏统计">
     <div class="stat">
@@ -594,8 +767,62 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
   </div>
 </main>
 
-<footer class="site-footer">
-  <div class="note">共 <b id="footCount">0</b> 条记录 · 数据只保存在这台浏览器的本地（localStorage），不上传任何服务器<br>换电脑 / 换浏览器时，记得先「导出」备份再「导入」</div>
+<!-- ================= 视图二：展览馆（对外展示） ================= -->
+<main id="viewExhibit" hidden>
+  <section class="exhibit-hero">
+    <div class="hero-band"></div>
+    <div class="hero-inner">
+      <svg class="hero-mascot" viewBox="0 0 140 120" aria-hidden="true">
+        <g stroke="#2E2016" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M32 50 L22 8 L60 34 Z" fill="#B98A5C"/>
+          <path d="M108 50 L118 8 L80 34 Z" fill="#B98A5C"/>
+          <path d="M36 44 L30 20 L52 35 Z" fill="#F2DFC2" stroke-width="3"/>
+          <path d="M104 44 L110 20 L88 35 Z" fill="#F2DFC2" stroke-width="3"/>
+          <ellipse cx="70" cy="70" rx="48" ry="44" fill="#C99B6C"/>
+          <ellipse cx="70" cy="84" rx="30" ry="20" fill="#F5E8D0" stroke-width="3"/>
+          <path d="M36 50 L50 45" fill="none"/>
+          <path d="M104 50 L90 45" fill="none"/>
+        </g>
+        <circle cx="48" cy="62" r="7" fill="#2E2016"/>
+        <circle cx="92" cy="62" r="7" fill="#2E2016"/>
+        <circle cx="50.5" cy="59.5" r="2.2" fill="#fff"/>
+        <circle cx="94.5" cy="59.5" r="2.2" fill="#fff"/>
+        <path d="M46 78 Q70 98 94 78 Z" fill="#2E2016"/>
+        <path d="M49 80 L52.5 86 L56 80.5 L59.5 86.5 L63 81 L66.5 87 L70 81.5 L73.5 87 L77 82 L80.5 87.5 L84 82 L86 80" fill="none" stroke="#F5E8D0" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <div class="hero-txt">
+        <span class="hero-eyebrow">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          个人收藏展 · 常设开放
+        </span>
+        <h2 id="exTitle">静一的泡泡玛特展</h2>
+        <p class="bio" id="exBio">欢迎来看我的拉布布收藏，每一只都是心头好。</p>
+        <div class="hero-facts">
+          <div class="fact"><span class="n" id="exCount">0</span><span class="t">件藏品</span></div>
+          <div class="fact"><span class="n" id="exSeries">0</span><span class="t">个系列</span></div>
+          <div class="fact"><span class="n" id="exHidden">0</span><span class="t">只隐藏款</span></div>
+          <div class="fact"><span class="n" id="exFav">0</span><span class="t">件心头好</span></div>
+        </div>
+        <div class="hero-actions" id="exActions">
+          <button class="btn btn-primary" id="btnShareExhibit" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+            分享展馆给朋友
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="exhibitBody" aria-label="展览藏品"></section>
+</main>
+
+<!-- ================= 视图三：单品分享（外部打开） ================= -->
+<main id="viewSingle" hidden>
+  <div class="single-wrap" id="singleWrap"></div>
+  <div class="single-nav"><a href="#" id="singleHomeLink">进入「静一的泡泡玛特展」</a></div>
+</main>
+
+<footer class="site-footer" id="siteFooter">
+  <div class="note">共 <b id="footCount">0</b> 条记录 · 数据只保存在这台浏览器的本地（localStorage），不上传任何服务器<br>换电脑 / 换浏览器时，记得先「导出」备份再「导入」；价格等私密信息只在维护台显示，展览馆不会展示</div>
   <button class="tbtn" id="btnClear" type="button">清空全部数据</button>
 </footer>
 
@@ -711,6 +938,71 @@ main { max-width: 1200px; margin: 0 auto; padding: 28px 24px 30px; }
   </div>
 </div>
 
+<!-- ================= 展主资料弹层 ================= -->
+<div class="overlay" id="profileOverlay" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h2 id="profileTitle">展主资料</h2>
+      <button class="icon-btn" id="btnCloseProfile" type="button" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="profileForm" class="form-grid" novalidate>
+      <div class="field span2">
+        <label for="p-name">展主昵称 <i class="req">*</i></label>
+        <input id="p-name" maxlength="20" placeholder="例如：静一" autocomplete="off">
+      </div>
+      <div class="field span2">
+        <label for="p-bio">展馆简介</label>
+        <textarea id="p-bio" rows="3" maxlength="100" placeholder="写一句给参观者的话，会显示在展览馆首页…"></textarea>
+      </div>
+      <div class="form-foot span2">
+        <span class="hint">展览馆标题会自动变为「{昵称}的泡泡玛特展」</span>
+        <div class="btns">
+          <button type="button" class="btn" id="btnCancelProfile">取消</button>
+          <button type="submit" class="btn btn-primary">保存资料</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= 单品详情弹层 ================= -->
+<div class="overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="sheet detail-sheet">
+    <div class="sheet-head">
+      <h2 id="detailTitle">藏品详情</h2>
+      <button class="icon-btn" id="btnCloseDetail" type="button" aria-label="关闭">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="detail-grid" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ================= 分享弹层 ================= -->
+<div class="overlay" id="shareOverlay" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="sheet share-sheet">
+    <h2 id="shareTitle">分享</h2>
+    <p class="desc" id="shareDesc">复制下面的链接发给朋友，对方点开就能看到这只拉布布。</p>
+    <div class="share-link-box">
+      <input id="shareLinkInput" readonly aria-label="分享链接">
+      <button class="btn" id="btnCopyLink" type="button">复制</button>
+    </div>
+    <div class="share-acts">
+      <button class="btn" id="btnShareCard" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-4.5-4.5L5 21"/></svg>
+        保存分享卡片
+      </button>
+      <button class="btn" id="btnShareNative" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+        系统分享
+      </button>
+    </div>
+    <div class="share-tip" id="shareTip">链接里已包含这只拉布布的信息，无需登录即可查看。</div>
+  </div>
+</div>
+
 <!-- ================= 确认弹层 ================= -->
 <div class="overlay" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
   <div class="sheet sheet-sm">
@@ -764,10 +1056,15 @@ var GRADS = [
 var CONDITIONS = ['全新未拆', '已拆盒', '已拆有瑕疵'];
 var RARITIES = ['常规', '热门', '限定', '隐藏款'];
 var STORAGE_KEY = 'labubu_keeper_v1';
+var PROFILE_KEY = 'labubu_profile_v1';
 
 /* ================= 状态 ================= */
-var items = load();
+var sharedSnapshot = Array.isArray(window.__SHARED_DATA__); // 展馆快照模式（外部只读）
+var items = sharedSnapshot ? window.__SHARED_DATA__.filter(function (x) { return x && x.name; }).map(sanitizeItem) : load();
+var profile = loadProfile();
 var editingId = null;
+var currentView = 'manage'; // manage | exhibit | single
+var shareItem = null;       // 当前分享的单品
 var pendingImage = null;
 var filters = { q: '', series: '', condition: '', rarity: '', fav: false };
 var sortKey = 'created-desc';
@@ -782,11 +1079,32 @@ function load() {
   } catch (e) { return []; }
 }
 function save() {
+  if (sharedSnapshot) return; // 快照只读，不落盘
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   } catch (e) {
     toast('保存失败：本地存储空间不足（照片太多啦），建议导出备份后清理', 'err', null, 6000);
   }
+}
+function loadProfile() {
+  var def = { name: '静一', bio: '欢迎来看我的拉布布收藏，每一只都是心头好。' };
+  if (sharedSnapshot && window.__SHARED_DATA__ && window.__SHARED_DATA__.profile) {
+    var sp = window.__SHARED_DATA__.profile;
+    return { name: String(sp.name || '静一').slice(0, 20), bio: String(sp.bio || '').slice(0, 100) || def.bio };
+  }
+  try {
+    var raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return def;
+    var p = JSON.parse(raw);
+    return {
+      name: String(p.name || '').trim().slice(0, 20) || def.name,
+      bio: String(p.bio || '').trim().slice(0, 100) || def.bio
+    };
+  } catch (e) { return def; }
+}
+function saveProfile() {
+  if (sharedSnapshot) return;
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (e) {}
 }
 function sanitizeItem(raw) {
   var cond = CONDITIONS.indexOf(raw.condition) >= 0 ? raw.condition : '已拆盒';
@@ -984,15 +1302,399 @@ function renderGrid() {
   grid.style.display = '';
   grid.innerHTML = list.map(cardHTML).join('');
 }
-function render() { renderStats(); renderGrid(); }
+function render() { renderStats(); renderGrid(); if (currentView === 'exhibit') renderExhibit(); }
+
+/* ================= 展览馆 ================= */
+function itemMediaHTML(it) {
+  if (it.image) {
+    return '<img src="' + esc(it.image) + '" alt="' + esc(it.name) + '" loading="lazy">';
+  }
+  var g = GRADS[hashStr(it.name) % GRADS.length];
+  var ch = it.name.replace(/^拉布布\s*[·•·]?\s*/, '').charAt(0) || '布';
+  return '<div class="ph" style="background:linear-gradient(140deg,' + g[0] + ',' + g[1] + ')"><span>' + esc(ch) + '</span></div>';
+}
+function exCardHTML(it, i) {
+  var rk = { '常规': 'common', '热门': 'hot', '限定': 'limited', '隐藏款': 'hidden' }[it.rarity] || 'common';
+  var delay = Math.min((i || 0) * 45, 420);
+  return '<article class="ex-card" data-id="' + esc(it.id) + '" style="animation-delay:' + delay + 'ms">' +
+    '<div class="card-img">' + itemMediaHTML(it) +
+      '<span class="badge-rarity rar-' + rk + '">' + esc(it.rarity) + '</span>' +
+      (it.favorite ? '<span class="fav-btn on" style="pointer-events:none" aria-hidden="true">' + ICONS.star + '</span>' : '') +
+    '</div>' +
+    '<div class="ex-body">' +
+      '<h3 class="card-title">' + esc(it.name) + '</h3>' +
+      '<div class="tags">' +
+        (it.spec ? '<span class="tag t-spec">' + esc(it.spec) + '</span>' : '') +
+        '<span class="tag t-cond cond-' + Math.max(0, CONDITIONS.indexOf(it.condition)) + '">' + esc(it.condition) + '</span>' +
+      '</div>' +
+      (it.notes ? '<p class="ex-note">' + esc(it.notes) + '</p>' : '') +
+    '</div>' +
+  '</article>';
+}
+function renderExhibit() {
+  var title = profile.name + '的泡泡玛特展';
+  $('#exTitle').textContent = title;
+  $('#exBio').textContent = profile.bio;
+  if (!sharedSnapshot) document.title = title + " · Jingyi's Labubu Exhibition";
+
+  var hiddenCnt = 0, favCnt = 0, seriesMap = {};
+  items.forEach(function (it) {
+    if (it.rarity === '隐藏款') hiddenCnt++;
+    if (it.favorite) favCnt++;
+    var key = it.series || '其他藏品';
+    if (!seriesMap[key]) seriesMap[key] = [];
+    seriesMap[key].push(it);
+  });
+  $('#exCount').textContent = items.length;
+  $('#exSeries').textContent = Object.keys(seriesMap).length;
+  $('#exHidden').textContent = hiddenCnt;
+  $('#exFav').textContent = favCnt;
+
+  var body = $('#exhibitBody');
+  if (!items.length) {
+    body.innerHTML = '<div class="exhibit-empty">' +
+      '<h2>展品筹备中</h2>' +
+      '<p>先去「维护台」添加几只拉布布，<br>展览馆就会开门迎客啦。</p></div>';
+    return;
+  }
+  var html = '';
+  var gi = 0;
+  Object.keys(seriesMap).forEach(function (key) {
+    var list = seriesMap[key].slice().sort(function (a, b) { return b.createdAt - a.createdAt; });
+    html += '<section class="exhibit-group" style="animation-delay:' + Math.min(gi * 60, 300) + 'ms">' +
+      '<div class="group-head"><h3>' + esc(key) + '</h3><span class="cnt">' + list.length + ' 件</span><span class="line"></span></div>' +
+      '<div class="grid">' + list.map(exCardHTML).join('') + '</div>' +
+    '</section>';
+    gi++;
+  });
+  body.innerHTML = html;
+}
+
+/* ================= 单品分享视图 ================= */
+function renderSingle(it, ownerName) {
+  var rk = { '常规': 'common', '热门': 'hot', '限定': 'limited', '隐藏款': 'hidden' }[it.rarity] || 'common';
+  var ci = Math.max(0, CONDITIONS.indexOf(it.condition));
+  var html =
+    '<div class="single-img">' + itemMediaHTML(it) +
+      '<span class="badge-rarity rar-' + rk + '">' + esc(it.rarity) + '</span>' +
+    '</div>' +
+    '<div class="single-body">' +
+      '<h2>' + esc(it.name) + '</h2>' +
+      '<div class="single-tags">' +
+        (it.series ? '<span class="tag">' + esc(it.series) + '</span>' : '') +
+        (it.spec ? '<span class="tag t-spec">' + esc(it.spec) + '</span>' : '') +
+        '<span class="tag t-cond cond-' + ci + '">' + esc(it.condition) + '</span>' +
+      '</div>' +
+      (it.notes ? '<p class="single-note">' + esc(it.notes) + '</p>' : '') +
+      '<div class="single-foot">' +
+        '<span class="from">来自 · ' + esc(ownerName || profile.name) + '的泡泡玛特展</span>' +
+        '<span class="btns">' +
+          '<button class="btn" id="btnSingleCopy" type="button">复制链接</button>' +
+          '<button class="btn btn-primary" id="btnSingleCard" type="button">保存卡片</button>' +
+        '</span>' +
+      '</div>' +
+    '</div>';
+  $('#singleWrap').innerHTML = html;
+  $('#btnSingleCopy').addEventListener('click', function () {
+    copyText(location.href).then(function () { toast('链接已复制，快发给朋友吧'); });
+  });
+  $('#btnSingleCard').addEventListener('click', function () { makeShareCard(it, ownerName); });
+}
+
+/* ================= 视图切换 & 路由 ================= */
+function enc64(str) { return btoa(unescape(encodeURIComponent(str))); }
+function dec64(str) { return decodeURIComponent(escape(atob(str))); }
+
+function setView(view, updateHash) {
+  currentView = view;
+  $('#viewManage').hidden = view !== 'manage';
+  $('#viewExhibit').hidden = view !== 'exhibit';
+  $('#viewSingle').hidden = view !== 'single';
+  $('#tabManage').classList.toggle('on', view === 'manage');
+  $('#tabExhibit').classList.toggle('on', view === 'exhibit');
+  var manageOnly = view === 'manage' && !sharedSnapshot;
+  $('#manageActions').style.display = manageOnly ? '' : 'none';
+  $('#siteFooter').style.display = view === 'manage' ? '' : 'none';
+  if (sharedSnapshot) {
+    $('#navTabs').style.display = 'none';
+    $('#exActions').style.display = 'none';
+  }
+  if (updateHash !== false) {
+    if (view === 'exhibit') {
+      try { history.replaceState(null, '', '#exhibit'); } catch (e) {}
+    } else if (view === 'manage') {
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    }
+  }
+  if (view === 'exhibit') renderExhibit();
+  window.scrollTo(0, 0);
+}
+function applyRoute() {
+  var h = location.hash || '';
+  if (h.indexOf('#p=') === 0) {
+    try {
+      var raw = JSON.parse(dec64(h.slice(3)));
+      var it = sanitizeItem(raw);
+      if (it.name) { renderSingle(it, raw.owner); setView('single', false); return; }
+    } catch (e) {}
+    toast('分享链接好像出错了', 'err');
+    try { history.replaceState(null, '', location.pathname); } catch (e2) {}
+    setView('manage', false);
+    return;
+  }
+  if (h === '#exhibit' || sharedSnapshot) { setView('exhibit', false); return; }
+  setView('manage', false);
+}
+
+/* ================= 详情弹层 ================= */
+function findItem(id) {
+  for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i];
+  return null;
+}
+function openDetail(it) {
+  var rk = { '常规': 'common', '热门': 'hot', '限定': 'limited', '隐藏款': 'hidden' }[it.rarity] || 'common';
+  var ci = Math.max(0, CONDITIONS.indexOf(it.condition));
+  var inManage = currentView === 'manage' && !sharedSnapshot;
+
+  var rows = '';
+  if (it.series) rows += '<dt>系列</dt><dd>' + esc(it.series) + '</dd>';
+  if (it.spec) rows += '<dt>规格</dt><dd>' + esc(it.spec) + '</dd>';
+  if (it.purchaseDate) rows += '<dt>入手日期</dt><dd>' + esc(it.purchaseDate) + '</dd>';
+  if (inManage) { // 价格等私密信息只在维护台显示
+    if (it.channel) rows += '<dt>购买渠道</dt><dd>' + esc(it.channel) + '</dd>';
+    rows += '<dt>购入价</dt><dd>' + (it.purchasePrice != null ? fmt(it.purchasePrice) : '—') + '</dd>';
+    rows += '<dt>当前市值</dt><dd>' + (it.currentValue != null ? fmt(it.currentValue) : '未估值') + '</dd>';
+    if (it.currentValue != null && it.purchasePrice != null) {
+      var pl = it.currentValue - it.purchasePrice;
+      var cls = pl > 0 ? 'up' : pl < 0 ? 'down' : 'flat';
+      rows += '<dt>盈亏</dt><dd><span class="pl ' + cls + '">' + fmtSign(pl) + '</span></dd>';
+    }
+  }
+
+  $('#detailBody').innerHTML =
+    '<div class="detail-media">' + itemMediaHTML(it) +
+      '<span class="badge-rarity rar-' + rk + '" style="position:absolute;top:12px;left:12px">' + esc(it.rarity) + '</span>' +
+    '</div>' +
+    '<div class="detail-info">' +
+      '<h3>' + esc(it.name) + (it.favorite ? ' <span class="star-mark" title="心头好">★</span>' : '') + '</h3>' +
+      '<div class="tags">' +
+        '<span class="tag t-cond cond-' + ci + '">' + esc(it.condition) + '</span>' +
+        (it.series ? '<span class="tag">' + esc(it.series) + '</span>' : '') +
+        (it.spec ? '<span class="tag t-spec">' + esc(it.spec) + '</span>' : '') +
+      '</div>' +
+      (rows ? '<dl class="dl">' + rows + '</dl>' : '') +
+      (it.notes ? '<div class="detail-note">' + esc(it.notes) + '</div>' : '') +
+      '<div class="detail-foot">' +
+        '<button class="btn btn-primary" data-dact="share" type="button">' +
+          '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>' +
+          '分享这只' +
+        '</button>' +
+        (inManage ?
+          '<button class="btn" data-dact="edit" type="button">编辑</button>' +
+          '<button class="btn btn-danger" data-dact="del" type="button">删除</button>'
+        : '') +
+      '</div>' +
+    '</div>';
+
+  $('#detailBody').onclick = function (e) {
+    var btn = e.target.closest('[data-dact]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-dact');
+    if (act === 'share') { openShare(it); }
+    else if (act === 'edit') { closeOverlay($('#detailOverlay')); openForm(it); }
+    else if (act === 'del') { closeOverlay($('#detailOverlay')); confirmDelete(it.id); }
+  };
+  openOverlay($('#detailOverlay'));
+}
+
+/* ================= 分享 ================= */
+function baseUrl() { return location.origin + location.pathname; }
+function buildItemShareLink(it) {
+  var data = {
+    name: it.name, series: it.series, spec: it.spec, image: null,
+    purchaseDate: it.purchaseDate, condition: it.condition,
+    rarity: it.rarity, notes: it.notes, favorite: it.favorite,
+    owner: profile.name
+  };
+  var linkNoImg = baseUrl() + '#p=' + enc64(JSON.stringify(data));
+  if (it.image) {
+    data.image = it.image;
+    var linkImg = baseUrl() + '#p=' + enc64(JSON.stringify(data));
+    if (linkImg.length <= 30000) return linkImg;
+  }
+  return linkNoImg;
+}
+function openShare(it) {
+  shareItem = it;
+  var link = buildItemShareLink(it);
+  $('#shareLinkInput').value = link;
+  $('#shareTitle').textContent = '分享「' + it.name.slice(0, 12) + (it.name.length > 12 ? '…' : '') + '」';
+  $('#btnShareNative').style.display = navigator.share ? '' : 'none';
+  var tip = '链接已包含这只拉布布的信息，对方点开即可查看，无需登录。';
+  if (link.length > 30000) tip += '照片较大，链接里没带照片，对方会看到名称占位，建议改用「保存分享卡片」。';
+  else if (it.image) tip += '链接里带了照片，请转发完整链接（部分聊天软件可能截断超长链接）。';
+  $('#shareTip').textContent = tip;
+  openOverlay($('#shareOverlay'));
+}
+function copyText(txt) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(txt).catch(function () { return legacyCopy(txt); });
+  }
+  return Promise.resolve(legacyCopy(txt));
+}
+function legacyCopy(txt) {
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch (e) {}
+  ta.remove();
+  return true;
+}
+
+/* 分享卡片（canvas 绘制） */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function makeShareCard(it, ownerName) {
+  var W = 1080, H = 1440;
+  var canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  var ctx = canvas.getContext('2d');
+
+  // 背景：米色 + 圆点
+  ctx.fillStyle = '#FAF1E2'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#EFDFC6';
+  for (var y = 24; y < H; y += 36) {
+    for (var x = 24; x < W; x += 36) {
+      ctx.beginPath(); ctx.arc(x, y, 2.4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // 顶部彩条
+  var bands = ['#FF6B3D', '#FFE08A', '#FFC2CF', '#C9EBD3'];
+  for (var b = 0; b < bands.length; b++) {
+    ctx.fillStyle = bands[b];
+    ctx.fillRect((W / bands.length) * b, 0, W / bands.length + 1, 18);
+  }
+
+  var ph = function () {
+    var g = GRADS[hashStr(it.name) % GRADS.length];
+    var grad = ctx.createLinearGradient(70, 110, W - 70, W - 70);
+    grad.addColorStop(0, g[0]); grad.addColorStop(1, g[1]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(70, 110, W - 140, W - 140);
+    ctx.fillStyle = 'rgba(46,32,22,.45)';
+    ctx.font = '400 320px "ZCOOL KuaiLe","Baloo 2",sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    var ch = it.name.replace(/^拉布布\s*[·•·]?\s*/, '').charAt(0) || '布';
+    ctx.fillText(ch, W / 2, 110 + (W - 140) / 2);
+    ctx.textBaseline = 'alphabetic';
+  };
+  var done = function (drawImg) {
+    if (drawImg) {
+      try { ctx.drawImage(drawImg, 70, 110, W - 140, W - 140); } catch (e) { ph(); }
+    } else ph();
+
+    var ty = 110 + (W - 140) + 72;
+    ctx.textAlign = 'left';
+    // 稀有度徽章
+    ctx.font = '700 34px "Baloo 2","PingFang SC",sans-serif';
+    var rw = ctx.measureText(it.rarity).width + 52;
+    roundRect(ctx, 70, ty - 46, rw, 60, 30);
+    ctx.fillStyle = '#2E2016'; ctx.fill();
+    ctx.fillStyle = '#FFE08A';
+    ctx.fillText(it.rarity, 70 + 26, ty - 3);
+    // 名称
+    ctx.fillStyle = '#2E2016';
+    ctx.font = '400 64px "ZCOOL KuaiLe","PingFang SC",sans-serif';
+    var name = it.name.length > 15 ? it.name.slice(0, 15) + '…' : it.name;
+    ctx.fillText(name, 70, ty + 92);
+    // 系列 / 状态
+    ctx.fillStyle = 'rgba(46,32,22,.62)';
+    ctx.font = '600 38px "Baloo 2","PingFang SC",sans-serif';
+    var meta = [it.series, it.spec, it.condition].filter(Boolean).join(' · ');
+    if (meta) ctx.fillText(meta.length > 24 ? meta.slice(0, 24) + '…' : meta, 70, ty + 160);
+    // 底部品牌
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FF6B3D';
+    ctx.font = '400 52px "ZCOOL KuaiLe","PingFang SC",sans-serif';
+    ctx.fillText((ownerName || profile.name) + '的泡泡玛特展', W / 2, H - 76);
+    ctx.fillStyle = 'rgba(46,32,22,.4)';
+    ctx.font = '700 24px "Baloo 2",sans-serif';
+    ctx.fillText("JINGYI'S LABUBU EXHIBITION", W / 2, H - 38);
+
+    canvas.toBlob(function (blob) {
+      if (!blob) { toast('卡片生成失败，换张照片试试', 'err'); return; }
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      var safe = it.name.replace(/[\\/:*?"<>|]/g, '').slice(0, 20) || '拉布布';
+      a.download = '分享卡片_' + safe + '.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      toast('分享卡片已保存，去发朋友圈吧');
+    }, 'image/png');
+  };
+
+  if (it.image) {
+    var img = new Image();
+    img.onload = function () { done(img); };
+    img.onerror = function () { done(null); };
+    img.src = it.image;
+  } else done(null);
+}
+
+/* 展馆快照分享：导出内嵌数据的独立 HTML */
+function exportShareHTML() {
+  if (!items.length) { toast('还没有藏品可以放进展馆', 'err'); return; }
+  try {
+    var payload = JSON.stringify({ profile: profile, items: items }).replace(/</g, '\\u003c');
+    var clone = document.documentElement.cloneNode(true);
+    // 清理动态渲染内容，减小体积（快照打开时会重新渲染）
+    ['#grid', '#exhibitBody', '#singleWrap'].forEach(function (sel) {
+      var el = clone.querySelector(sel);
+      if (el) el.innerHTML = '';
+    });
+    clone.querySelectorAll('img').forEach(function (im) { im.removeAttribute('src'); });
+    clone.querySelectorAll('.overlay.open').forEach(function (o) { o.classList.remove('open'); });
+    var bd = clone.querySelector('body');
+    if (bd) bd.removeAttribute('style');
+    var s = document.createElement('script');
+    s.setAttribute('data-shared-data', '');
+    s.textContent = 'window.__SHARED_DATA__=' + payload + ';';
+    bd.insertBefore(s, bd.firstChild);
+    var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var a = document.createElement('a');
+    var d = new Date();
+    var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+    a.href = URL.createObjectURL(blob);
+    a.download = profile.name + '的泡泡玛特展_' + stamp + '.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    toast('展馆快照已生成，把 HTML 文件发给朋友就能看展', 'ok', null, 5000);
+  } catch (e) {
+    toast('快照生成失败：' + (e && e.message ? e.message : '未知错误'), 'err');
+  }
+}
 
 /* ================= 弹层控制 ================= */
 function openOverlay(el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeOverlay(el) {
   el.classList.remove('open');
-  if (!$('#formOverlay').classList.contains('open') && !$('#confirmOverlay').classList.contains('open')) {
-    document.body.style.overflow = '';
-  }
+  var ids = ['#formOverlay', '#confirmOverlay', '#detailOverlay', '#shareOverlay', '#profileOverlay'];
+  var anyOpen = ids.some(function (id) { return $(id).classList.contains('open'); });
+  if (!anyOpen) document.body.style.overflow = '';
 }
 
 /* ================= 表单 ================= */
@@ -1114,8 +1816,9 @@ function doExport() {
   if (!items.length) { toast('还没有数据可导出', 'err'); return; }
   var payload = {
     app: 'labubu-keeper',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
+    profile: profile,
     items: items
   };
   var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -1136,6 +1839,10 @@ function handleImport(file) {
     try { data = JSON.parse(txt); } catch (e) { throw new Error('parse'); }
     var arr = Array.isArray(data) ? data : (data && Array.isArray(data.items) ? data.items : null);
     if (!arr) throw new Error('format');
+    if (data && data.profile && data.profile.name) {
+      profile = { name: String(data.profile.name).slice(0, 20), bio: String(data.profile.bio || '').slice(0, 100) || profile.bio };
+      saveProfile();
+    }
     var added = 0, skipped = 0;
     arr.forEach(function (raw) {
       if (!raw || typeof raw !== 'object' || !String(raw.name || '').trim()) { skipped++; return; }
@@ -1215,13 +1922,17 @@ function bindEvents() {
   $('#favToggle').addEventListener('click', function () { filters.fav = !filters.fav; renderGrid(); updateFilterUI(); });
   $('#resetFilters').addEventListener('click', resetFilters);
 
-  // 网格事件委托
+  // 网格事件委托（点卡片本体 → 详情；点按钮 → 对应操作）
   $('#grid').addEventListener('click', function (e) {
     var btn = e.target.closest('[data-act]');
-    if (!btn) return;
-    var card = btn.closest('[data-id]');
+    var card = e.target.closest('[data-id]');
     if (!card) return;
     var id = card.getAttribute('data-id');
+    if (!btn) {
+      var det = findItem(id);
+      if (det && currentView === 'manage' && !sharedSnapshot) openDetail(det);
+      return;
+    }
     var act = btn.getAttribute('data-act');
     if (act === 'fav') {
       for (var i = 0; i < items.length; i++) {
@@ -1330,10 +2041,86 @@ function bindEvents() {
       if ($('#confirmOverlay').classList.contains('open')) {
         confirmFn = null;
         closeOverlay($('#confirmOverlay'));
+      } else if ($('#shareOverlay').classList.contains('open')) {
+        closeOverlay($('#shareOverlay'));
+      } else if ($('#detailOverlay').classList.contains('open')) {
+        closeOverlay($('#detailOverlay'));
+      } else if ($('#profileOverlay').classList.contains('open')) {
+        closeOverlay($('#profileOverlay'));
       } else if ($('#formOverlay').classList.contains('open')) {
         closeForm();
       }
     }
+  });
+
+  // 视图切换 & 路由
+  $('#tabManage').addEventListener('click', function () { setView('manage'); });
+  $('#tabExhibit').addEventListener('click', function () { setView('exhibit'); });
+  window.addEventListener('hashchange', applyRoute);
+  $('#singleHomeLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    try { history.replaceState(null, '', location.pathname); } catch (err) {}
+    applyRoute();
+  });
+
+  // 展馆分享（导出快照 HTML）
+  $('#btnShareExhibit').addEventListener('click', exportShareHTML);
+
+  // 展主资料
+  $('#btnProfile').addEventListener('click', function () {
+    $('#p-name').value = profile.name;
+    $('#p-bio').value = profile.bio;
+    openOverlay($('#profileOverlay'));
+    setTimeout(function () { $('#p-name').focus(); }, 120);
+  });
+  $('#btnCloseProfile').addEventListener('click', function () { closeOverlay($('#profileOverlay')); });
+  $('#btnCancelProfile').addEventListener('click', function () { closeOverlay($('#profileOverlay')); });
+  $('#profileForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('#p-name').value.trim();
+    if (!name) {
+      toast('展主昵称不能为空', 'err');
+      $('#p-name').style.animation = 'shake .4s';
+      setTimeout(function () { $('#p-name').style.animation = ''; }, 450);
+      $('#p-name').focus();
+      return;
+    }
+    profile = { name: name.slice(0, 20), bio: $('#p-bio').value.trim().slice(0, 100) || '欢迎来看我的拉布布收藏，每一只都是心头好。' };
+    saveProfile();
+    closeOverlay($('#profileOverlay'));
+    if (currentView === 'exhibit') renderExhibit();
+    toast('展主资料已更新');
+  });
+
+  // 详情弹层
+  $('#btnCloseDetail').addEventListener('click', function () { closeOverlay($('#detailOverlay')); });
+  $('#detailOverlay').addEventListener('mousedown', function (e) { if (e.target === this) closeOverlay($('#detailOverlay')); });
+
+  // 分享面板
+  $('#btnCopyLink').addEventListener('click', function () {
+    if (!shareItem) return;
+    copyText($('#shareLinkInput').value).then(function () { toast('链接已复制，快发给朋友吧'); });
+  });
+  $('#btnShareCard').addEventListener('click', function () {
+    if (shareItem) makeShareCard(shareItem);
+  });
+  $('#btnShareNative').addEventListener('click', function () {
+    if (!shareItem || !navigator.share) return;
+    var it = shareItem;
+    navigator.share({
+      title: it.name,
+      text: it.name + ' · 来自' + profile.name + '的泡泡玛特展',
+      url: $('#shareLinkInput').value
+    }).catch(function () {});
+  });
+  $('#shareOverlay').addEventListener('mousedown', function (e) { if (e.target === this) closeOverlay($('#shareOverlay')); });
+
+  // 展览馆卡片：点卡片 → 详情
+  $('#exhibitBody').addEventListener('click', function (e) {
+    var card = e.target.closest('[data-id]');
+    if (!card) return;
+    var it = findItem(card.getAttribute('data-id'));
+    if (it) openDetail(it);
   });
 
   // 页脚清空
@@ -1349,6 +2136,7 @@ function bindEvents() {
 
 /* ================= 启动 ================= */
 bindEvents();
+applyRoute();
 render();
 updateFilterUI();
 })();
